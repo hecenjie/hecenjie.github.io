@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>Welcome To My Blog | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Welcome To My Blog</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">June 22, 2018&nbsp;&nbsp;23:30:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/杂谈/">杂谈</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="写在前面的话"><a href="#写在前面的话" class="headerlink" title="写在前面的话"></a>写在前面的话</h2><p>创建这个博客已经一年多过去了，但与其说是博客，我更希望把它当作自己的笔记本，至少在现阶段，学习知识的重要性远比分享知识高。这一年里，学到了很多，也发生了很多事，可以说是整个大学里最充实的一年了，因此在这做一个总结。</p>
+<p>很庆幸在一年前，在看了很多大牛的分享后，深刻的认识到自己沉迷于各种编程语言是多么愚昧的事，也从一些粗浅的Web项目和杂七杂八的框架使用中跳了出来，一步一步巩固自己的计算机基础，深入去理解各种底层实现。曾以为会很多框架是一个人竞争力的体现，但却没注意到，盲目的学习如何使用框架才是收获与成长最低的一件事，而在码农过剩的时代里，如果仅仅是学会了大家都能轻易学会且毫无门槛的东西，则越容易被他人替代，所以，如何提高自己的不可替代性才是一个应该沉下心来思考的问题。</p>
+<p>在这一年里阅读了不少JDK源码，并且把以前只是抽象层面理解的框架从实现上更深入的分析了一遍，这个过程虽然很枯燥乏味，但是结果却是很好的，通过阅读源码，不仅让我对网上大部分博客的“片面”之言有了辨别能力，也让我在实习的时候能更轻松的将一些思想融入到代码中去，实现起来自然也就更加优雅。并且在这个过程中，能发现到JDK也是有BUG的，Spring也是有很多可以优化的地方的，在分析问题时会渐渐开始关注作者的思路，以及每一行为什么需要这样写，不管是内功还是外功都给了我很大的帮助。</p>
+<p>除此之外，半年的实习经历对我来说收获更是不少，也让我第一次有机会接触到企业级的项目，不再是学校里的各种玩具项目。虽然许多项目都是在已有的项目基础上做优化，但也有自己完整的设计并实现了一套系统，并对各种可能产生问题的部分进行思考，也对公司项目的规模以及架构有了一定的理解。</p>
+<p>总之，路还长，希望自己能耐心走下去。记于2019年八月。</p>
+<h2 id="铭记"><a href="#铭记" class="headerlink" title="铭记"></a>铭记</h2><p>Work hard in silence, let success make the noise.</p>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/hello/"># hello</a>
+                    
+                        <a href="/tags/杂谈/"># 杂谈</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2018/06/25/README文档的规范写法总结/">README文档的规范写法总结</a>
+            
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

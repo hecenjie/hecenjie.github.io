@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>Simple IoC开发日志：注册BeanDefinitions | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Simple IoC开发日志：注册BeanDefinitions</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">May 19, 2019&nbsp;&nbsp;22:29:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/Spring/">Spring</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="Spring-IoC实现"><a href="#Spring-IoC实现" class="headerlink" title="Spring IoC实现"></a>Spring IoC实现</h2><p>在之前已经介绍过Spring IoC对资源的抽象了，也就是<code>Resource</code>接口。当我们加载了指定的资源后，接下来需要做的就是将资源（也就是XML文件）解析成<code>Document</code>实例，并解析成<code>BeanDefinition</code>然后注册。这个过程的整体流程如下：</p>
+<ol>
+<li><code>loadBeanDefinitions(Resource resource)</code>作为方法入口。</li>
+<li><code>doLoadBeanDefinitions(InputSource inputSource, Resource resource)</code>方法实现了真正的加载逻辑，它首先根据XML获取<code>Document</code>实例，然后根据<code>Document</code>实例注册Bean信息。<br> 2.1. <code>doLoadDocument()</code>方法根据XML获取<code>Document</code>实例，其中会牵扯到获取验证模式和错误处理等过程。<br> 2.2. <code>registerBeanDefinitions()</code>遍历XML的每一个节点并注册它们的<code>BeanDefinition</code>。</li>
+</ol>
+<p>接下来就上面获取<code>Document</code>实例和注册<code>BeanDefinition</code>进行分析。</p>
+<h3 id="获取Document"><a href="#获取Document" class="headerlink" title="获取Document"></a>获取Document</h3><p>解析XML有两种方式，一种是DOM解析，另一种则是SAX解析，关于这两个解析方式在网上也有比较充足的资料，就不在这赘述了。在这一个过程还有两个方面是需要关心的，一个是验证模式，另一个是错误处理（还有一个是Spring实现的<code>EntityResolver</code>，自定义了验证文件的获取方式，在本地建立了一个映射而不需要从网络中获取）。</p>
+<p>首先，验证模式同样也有两种，一种是DTD验证模式，另一种是XSD验证模式。因此，在这里需要根据XML文件中的一些信息来探测决定具体使用哪种验证模式，比如说如果内容中包含<code>DOCTYPE</code>则肯定为DTD验证模式，而如果探测不出的话，最终会使用XSD验证模式。错误处理就是当加载<code>Document</code>发生错误时需要做出的反应，简单的实现就是输出错误日志。当以上两个都准备好了后，就先通过<code>DocumentBuilderFactory</code>创建一个<code>DocumentBuilder</code>，再调用<code>DocumentBuilder</code>的<code>parse()</code>方法直接解析并返回一个<code>Document</code>实例即可。</p>
+<h3 id="注册BeanDefinition"><a href="#注册BeanDefinition" class="headerlink" title="注册BeanDefinition"></a>注册BeanDefinition</h3><p>注册<code>BeanDefinition</code>实际上就是通过上面获取到的<code>Document</code>的根节点开始逐个遍历子节点（要先判断根节点是否使用的默认命名空间），然后根据<code>&lt;import/&gt;</code>、<code>&lt;alias/&gt;</code>、<code>&lt;bean/&gt;</code>、<code>&lt;beans/&gt;</code>这四种标签分别进行解析，其中<code>&lt;beans/&gt;</code>标签的处理是一个递归的过程，而<code>&lt;bean/&gt;</code>标签的处理则是需要重点关注的，在这个过程中主要分为两步：解析出<code>BeanDefinition</code>并且完成注册。</p>
+<h2 id="Simple-IoC实现"><a href="#Simple-IoC实现" class="headerlink" title="Simple IoC实现"></a>Simple IoC实现</h2><h3 id="获取Document-1"><a href="#获取Document-1" class="headerlink" title="获取Document"></a>获取Document</h3><p>目前仅支持XSD格式的验证，并且没有实现<code>EntityResolver</code>，也就是说无法根据自定义的策略从本地拿到验证文件，还是默认的从网络中获取。</p>
+<h3 id="注册BeanDefinition-1"><a href="#注册BeanDefinition-1" class="headerlink" title="注册BeanDefinition"></a>注册BeanDefinition</h3><p>在目前的实现中，并没有像Spring IoC一样支持四种标签的解析，这里只解析了<code>&lt;bean/&gt;</code>标签。之后，需要重点关注的一个方法就是<code>parseBeanDefinitionElement()</code>，这是解析<code>&lt;bean/&gt;</code>标签的核心逻辑，主要完成了从<code>&lt;bean/&gt;</code>标签的<code>id</code>属性和<code>name</code>属性还有一些别的属性以及子元素中获取到值并组装成一个<code>BeanDefinition</code>（实际上还会包装一层<code>BeanDefinitionHolder</code>，其中保存了<code>beanName</code>和<code>aliases</code>），下面对这一部分的细节进行分析。</p>
+<h4 id="parseBeanDefinitionElement"><a href="#parseBeanDefinitionElement" class="headerlink" title="parseBeanDefinitionElement"></a>parseBeanDefinitionElement</h4><p>这个方法主要完成以下这些事：</p>
+<ol>
+<li>解析出<code>&lt;bean&gt;</code>标签中的<code>id</code>属性和<code>name</code>属性，在Spring中是以<code>,</code>作为分隔符取得多个别名，但在这里的实现中只考虑一种别名的情况，也就是没有使用<code>,</code>进行分割。</li>
+<li>优先使用id作为<code>beanName</code>，但如果并没有设置<code>id</code>属性的话，就使用第一个别名作为<code>beanName</code>，那么在这里就只有唯一的一个别名，当id没设置时它就是<code>beanName</code>。</li>
+<li>检查<code>beanName</code>和别名的唯一性，如果不唯一，则抛出异常，唯一的话则加入到集合中去。（注意，别名也是需要唯一的）</li>
+<li>解析别的属性以及子元素，开始构造<code>AbstractBeanDefinition</code>。上面几步只是对名称做一些解析，这一步的工作量则相对要大很多，下面是一些比较常见的属性：<br> 4.1. 解析<code>class</code>属性，最重要的了<br>4.2. 解析<code>parent</code>属性，未实现<br>4.3. 解析<code>scope</code>属性<br>4.4. 解析<code>autowire</code>属性<br>4.5. 解析<code>init-method</code>属性<br>4.6. 解析<code>destroy-method</code>属性<br>4.7. 解析<code>factory-bean</code>属性<br>4.8. 解析<code>factory-method</code>属性<br>4.9. 解析<code>&lt;lookup-method/&gt;</code>子元素，未实现<br>4.10. 解析<code>&lt;replaced-method/&gt;</code>子元素，未实现<br>4.11. 解析<code>&lt;property/&gt;</code>子元素，这一步也很重要，它将属性名和属性值封装到了<code>PropertyValue</code>中，并且用<code>PropertyValues</code>封装所有属性（也就是每个<code>BeanDefinition</code>都有一个<code>PropertyValues</code>类型的成员变量）。<br>4.12. 解析<code>&lt;constructor-arg/&gt;</code>子元素，未实现</li>
+<li>此时已经构造出了一个相对完整的<code>BeanDefinition</code>了，这时候将其和<code>beanName</code>与别名一起封装成<code>BeanDefinitionHolder</code>对象。</li>
+<li>注册<code>beanName</code> -&gt; <code>BeanDefinition</code>以及<code>alias</code> -&gt; <code>beanName</code>的映射关系（个人认为，这正是IoC的本质所在，通过一个映射表维护一个名称到<code>BeanDefinition</code>的关系，而这个<code>BeanDefinition</code>中封装了这个Bean的各种信息）。这里要注意的是，在注册<code>alias</code> -&gt; <code>beanName</code>的映射关系时，Spring考虑了别名循环指向的问题，它是通过递归来进行判断的。</li>
+<li>此时，这个<code>BeanDefinition</code>已经注册成功，可以等待使用了</li>
+</ol>
+<h2 id="快速开始"><a href="#快速开始" class="headerlink" title="快速开始"></a>快速开始</h2><p>针对根据XML获取<code>Document</code>实例并注册<code>BeanDefinition</code>的过程做一些简单的测试：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testLoadBeanDefinitions</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    ResourceLoader resourceLoader = <span class="keyword">new</span> FileSystemResourceLoader();</span><br><span class="line">    Resource resource = resourceLoader.getResource(<span class="string">"C:\\Users\\canjie\\Desktop\\simple.xml"</span>);</span><br><span class="line">    BeanDefinitionRegistry registry = <span class="keyword">new</span> DefaultListableBeanFactory();</span><br><span class="line">    BeanDefinitionReader beanDefinitionReader = <span class="keyword">new</span> XmlBeanDefinitionReader(registry);</span><br><span class="line">    assertEquals(beanDefinitionReader.loadBeanDefinitions(resource), <span class="number">2</span>);</span><br><span class="line">    assertEquals(((DefaultListableBeanFactory) registry).getBeanDefinition(<span class="string">"first"</span>).getBeanClassName(),</span><br><span class="line">            <span class="string">"beans.First"</span>);</span><br><span class="line">    assertEquals(((DefaultListableBeanFactory) registry).getBeanDefinition(<span class="string">"second"</span>).getBeanClassName(),</span><br><span class="line">            <span class="string">"beans.Second"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/IoC/"># IoC</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/05/21/Simple-IoC开发日志：getBean/">Simple IoC开发日志：加载Bean</a>
+            
+            
+            <a class="next" rel="next" href="/2019/05/19/Simple-IoC开发日志：资源加载/">Simple IoC开发日志：资源加载</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

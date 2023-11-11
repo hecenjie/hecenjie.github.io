@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>浅谈对尾递归的理解 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">浅谈对尾递归的理解</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">August 22, 2018&nbsp;&nbsp;11:06:04</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/算法/">算法</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <p>今天在做《剑指Offer》第十题时，发现了一个用尾递归的解法，由于之前对于尾递归并没有太多了解，于是查阅了一些资料，在此对其进行一个简单的总结。关于其它题目的题解与笔记，感兴趣的朋友可以到我的Github或个人博客上看看：<a href="https://github.com/cenjieHo/CodingInterviews/blob/master/README.md" target="_blank" rel="noopener">剑指Offer笔记</a>  <a href="http://hecenjie.cn/" target="_blank" rel="noopener">Cenjie’s Blog</a> ，</p>
+<p>以下是正文。</p>
+<a id="more"></a>
+<h3 id="递归本质"><a href="#递归本质" class="headerlink" title="递归本质"></a>递归本质</h3><p>递归的本质是自己调用自己，因为是嵌套调用，所以<strong>栈帧无法回收</strong>，在递归调用的层级太多时，往往会引发调用栈溢出，也就是<strong>内存溢出</strong>。</p>
+<h3 id="尾递归概述"><a href="#尾递归概述" class="headerlink" title="尾递归概述"></a>尾递归概述</h3><p>尾递归本质与递归并无区别，只不过是递归的一种特殊写法。尾递归要求递归调用是整个函数体中最后执行的语句且它的返回值不属于表达式的一部分，例如 <code>return 3f(n)</code>或者<code>return f(n)+f(n-1)</code> 都是不允许的。</p>
+<p>由于尾递归也是一种递归，因此<strong>这种写法本身并不会有任何的优化效果，内存依旧会溢出</strong>，只不过一些编译器中会加入对尾递归的优化机制，在编译代码时自动根据尾递归的特性对其进行优化。</p>
+<h3 id="如何优化尾递归"><a href="#如何优化尾递归" class="headerlink" title="如何优化尾递归"></a>如何优化尾递归</h3><p>因为在递归调用自身的时候，这一层函数已经没有要做的事情了，虽然被递归调用的函数是在当前的函数里，但是他们之间的关系已经在传参的时候了断了，也就是这一层函数的所有变量什么的都不会再被用到了，所以当前函数虽然没有执行完，不能弹出栈，但它确实已经可以出栈了，这是一方面。</p>
+<p>另一方面，正因为调用的是自身，所以需要的存储空间是一模一样的，那干脆重新刷新这些空间给下一层利用就好了，不用销毁再另开空间。</p>
+<p>因此，为尾递归进行优化主要分两个步骤：<br>1、写成尾递归的形式。<br>2、编译器遇到此形式时自动为其优化。</p>
+<p>而在<a href="https://www.nowcoder.com/practice/c6c7742f5ba7442aada113136ddea0c3?tpId=13&amp;tqId=11160&amp;tPage=1&amp;rp=1&amp;ru=%2Fta%2Fcoding-interviews&amp;qru=%2Fta%2Fcoding-interviews%2Fquestion-ranking" target="_blank" rel="noopener">第十题：斐波那契数列</a>中，由于Java没有对尾递归进行优化，因此与使用普通递归并无太大区别，依然会产生内存溢出的问题。</p>
+<p>本文参考：<a href="https://www.cnblogs.com/bellkosmos/p/5280619.html" target="_blank" rel="noopener">https://www.cnblogs.com/bellkosmos/p/5280619.html</a></p>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/算法/"># 算法</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2018/09/06/ArrayList源码分析/">ArrayList源码分析</a>
+            
+            
+            <a class="next" rel="next" href="/2018/06/25/README文档的规范写法总结/">README文档的规范写法总结</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

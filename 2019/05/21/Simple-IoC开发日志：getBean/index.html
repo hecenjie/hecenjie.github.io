@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>Simple IoC开发日志：加载Bean | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Simple IoC开发日志：加载Bean</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">May 21, 2019&nbsp;&nbsp;18:43:00</a>
+                        </span>
+                    
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="Spring-IoC实现"><a href="#Spring-IoC实现" class="headerlink" title="Spring IoC实现"></a>Spring IoC实现</h2><p>在之前加载注册<code>BeanDefinition</code>完成后，Spring已经存在一组<code>beanName</code> - &gt;<code>BeanDefinition</code>的映射了，接下来我们就可以根据名称或类型实例化并获取我们想要的Bean，而和这个实例化Bean相关的则是整个<code>BeanFactory</code>体系。接下来我们从<code>doGetBean()</code>这个方法开始分析起，这个方法涵盖了实例化Bean的总流程，大致步骤如下：</p>
+<ol>
+<li>将 alias name、FactoryBean name 转换为对应的<code>beanName</code></li>
+<li>尝试从缓存中获取单例Bean</li>
+<li>如果缓存中不存在，则从父类容器中加载</li>
+<li>合并父类的属性，获取<code>RootBeanDefinition</code></li>
+<li>加载所依赖的Bean</li>
+<li>根据不同的<code>scope</code>实例化Bean</li>
+<li>类型转换处理，如果传递的<code>requiredType</code>不为<code>null</code>，则需要检测所得到的Bean的类型是否与该<code>requiredType</code>一致。</li>
+</ol>
+<p>首先，如果名称是以<code>&amp;</code>开头的，则去掉<code>&amp;</code>，并且根据别名获取到<code>beanName</code>，然后尝试从单例缓存中获取Bean，这也正是解决循环依赖的关键，第一次获取时是没有效果的，继续往下走。此时判断是否发生原型模式的循环依赖，如果发生了，则抛出异常。接下来根据<code>beanName</code>从映射中获取到<code>BeanDefinition</code>（其实是<code>RootBeanDefinition</code>），然后优先加载所依赖的Bean（<code>depends-on</code>标签），然后根据不同的<code>scope</code>分别实例化Bean，完成<code>FactoryBean</code>的相关处理，最后做类型转换即可，不过目前不会去关心这个类型转换。下面开始分析比较重要的几个步骤。</p>
+<h3 id="Bean实例化"><a href="#Bean实例化" class="headerlink" title="Bean实例化"></a>Bean实例化</h3><p>Bean会根据不同的<code>scope</code>采取不同的实例化策略，总共有五种<code>scope</code>：<code>singleton</code>、<code>prototype</code>、<code>request</code>、<code>session</code>、<code>global session</code>，其实比较常用的也就<code>singleton</code>和<code>prototype</code>，而<code>prototype</code>不需要解决循环依赖的问题，直接反射创建就好了，重点需要关注的是<code>singleton</code>的实例化过程。</p>
+<p>接下来从<code>getSingleton()</code>这个方法进入Bean实例化的正戏。这个方法的开始可以看到用到了双重校验锁，因为多个线程可能在之前同时判断缓存中没有Bean，就都进入到了这里，但为了保证不重复实例化Bean（单例模式），在获取锁之后还会再判断一次是否能从缓存中获取，这里是要注意的。接下来通过<code>ObjectFactory#getObject()</code>方法开始实例化，里面会调用<code>doCreateBean()</code>方法，然后经历以下几个步骤：</p>
+<ol>
+<li>使用合适的实例化策略来创建新的实例：工厂方法、构造函数自动注入、简单初始化。此时Bean已经被创建出来了，只是没有进行属性填充和初始化</li>
+<li>如果为单例模式、允许循环依赖且当前单例Bean正在被创建，那么将其加入到三级缓存<code>singletonFactories</code>中</li>
+<li>属性填充</li>
+<li>调用初始化方法<br> 4.1. 激活<code>Aware</code>方法，对特殊的Bean处理<br>4.2. 调用<code>postProcessBeforeInitialization()</code><br>4.3. 如果实现了<code>InitializingBean</code>接口，调用其<code>afterPropertiesSet()</code>方法；如果指定了<code>init-method</code>，则调用指定的<code>init-method</code><br>4.4. 调用<code>postProcessAfterInitialization()</code></li>
+<li>注册Bean的销毁方法。与<code>InitializingBean</code>和<code>init-method</code>用于对象的自定义初始化工作相似，<code>DisposableBean</code>和<code>destroy-method</code>用于对象的自定义销毁工作。但这里并不是立刻执行，而是先注册，等到Spring容器关闭的时候才去调用，并且需要我们主动去告知Spring容器，对于<code>BeanFactory</code>容器需要调用<code>destroySingletons()</code>方法，对于<code>ApplicationContext</code>容器需要调用<code>registerShutdownHook()</code>方法。</li>
+</ol>
+<p>到这里，我们就获取到一个Bean了，下面对其中的一些细节进行解释。</p>
+<h3 id="createBeanInstance"><a href="#createBeanInstance" class="headerlink" title="createBeanInstance"></a>createBeanInstance</h3><p>在这个方法中，完成了Bean的实例化（注意，此时还没填充属性等等），Spring提供了四种实例化策略：</p>
+<ol>
+<li><code>Supplier</code>回调：从<code>BeanDefinition</code>中获取<code>Supplier</code>对象，如果不为空，则调用<code>obtainFromSupplier()</code>方法完成Bean的初始化</li>
+<li>工厂方法初始化</li>
+<li>构造函数自动注入初始化</li>
+<li>默认构造函数注入</li>
+</ol>
+<p>工厂方法初始化的工厂分为静态工厂和实例工厂，静态工厂的配置如下：<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"eat"</span> <span class="attr">class</span>=<span class="string">"it.spring.liao.com.EatFactory"</span> <span class="attr">factory-method</span>=<span class="string">"getInstance"</span> /&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>实例工厂的配置如下：<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"eatFactory"</span> <span class="attr">class</span>=<span class="string">"it.spring.liao.com.EatFactory "</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"eat"</span> <span class="attr">factory-bean</span>=<span class="string">"eatFactory"</span> <span class="attr">factory-method</span>=<span class="string">"getInstance"</span>/&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>如果配置了构造函数的自动注入或者配置了构造函数参数，则调用带参的构造函数去实例化Bean。因为一个类有多个构造函数，每个构造函数都有不同的构造参数，需要根据参数个数和类型确定最精确匹配的构造函数，这部分的源码还是十分复杂的。</p>
+<p>对于带参构造函数或默认构造函数，都会先判断是否有覆盖方法，如果有的话则使用CGLIB创建代理对象，否则通过反射来创建Bean（核心代码其实就是<code>constructorToUse.newInstance()</code>）。</p>
+<p>而对于工厂方法，其实也就是通过该<code>Method</code>反射创建Bean（核心代码其实就是<code>factoryMethod.invoke(factoryBean, args)</code>）。</p>
+<h3 id="解决循环依赖"><a href="#解决循环依赖" class="headerlink" title="解决循环依赖"></a>解决循环依赖</h3><p>先看一下Spring中关于这块的实现：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">boolean</span> earlySingletonExposure = (mbd.isSingleton() 	<span class="comment">// 如果为单例模式</span></span><br><span class="line">		&amp;&amp; <span class="keyword">this</span>.allowCircularReferences 				<span class="comment">// 允许循环依赖</span></span><br><span class="line">		&amp;&amp; isSingletonCurrentlyInCreation(beanName));	<span class="comment">// 当前单例 Bean 正在被创建</span></span><br><span class="line"><span class="keyword">if</span> (earlySingletonExposure) &#123;</span><br><span class="line">	<span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</span><br><span class="line">		logger.debug(<span class="string">"Eagerly caching bean '"</span> + beanName +</span><br><span class="line">				<span class="string">"' to allow for resolving potential circular references"</span>);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 这个方法的调用发生在 createBeanInstance() 方法之后，也就是说这个 bean 其实已经创建出来了，但是没有进行属性填充和初始化，</span></span><br><span class="line">	<span class="comment">// 但是此时已经可以根据对象引用定位到堆中该对象了，所以将该对象提前曝光出来，加入到三级缓存 singletonFactories 中</span></span><br><span class="line">	<span class="comment">// 这里是为了后期避免循环依赖</span></span><br><span class="line">	addSingletonFactory(beanName, () -&gt; getEarlyBeanReference(beanName, mbd, bean));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>Spring IoC是通过三级缓存这么个机制解决循环依赖的问题的，每次在调用<code>createBeanInstance()</code>方法实例化一个Bean后，就将这个Bean加入到三级缓存<code>singletonFactories</code>中，而此时如果依赖的属性又依赖于自己，即发生循环依赖的话，那么就会直接从三级缓存中拿到这个Bean，并将其升级到二级缓存中去，如果后续还有循环依赖的话，直接从二级缓存就能获取到结果。需要注意的是，这时候的Bean仅仅只是实例化了出来，并没有进行属性填充等操作，只有当一切都完成后，才会将这个Bean升级到一级缓存中去。</p>
+<h3 id="populateBean"><a href="#populateBean" class="headerlink" title="populateBean"></a>populateBean</h3><p>上面已经实例化出了Bean，并且加入到三级缓存中了，但是这个Bean还有许多事没做完，接下来第一件事就是对其进行属性填充，也就是<code>populateBean()</code>这个方法，它的大体步骤如下：</p>
+<ol>
+<li>获取Bean的属性值，也就是<code>PropertyValues</code></li>
+<li>根据名称或类型解析依赖（此时并未注入到Bean中，仅仅将属性放到了`pvs中）</li>
+<li>调用<code>applyPropertyValues()</code>真正注入属性：<br> 3.1. 检测属性值列表是否已经转换过，若转换过，则直接填充属性，无需再次转换<br>3.2. 遍历属性值列表<code>pvs</code>，解析原始值<code>originalValue</code>，得到解析值<code>resolvedValue</code><br>3.3. 对解析后的属性值<code>resolvedValue</code>进行类型转换<br>3.4. 将类型转换后的属性值设置到<code>PropertyValue</code>对象中，并将<code>PropertyValue</code>对象存入<code>deepCopy</code>集合中<br>3.5. 将<code>deepCopy</code>中的属性信息注入到Bean对象中</li>
+</ol>
+<p>首先讲讲根据名称或类型解析依赖。<code>autowireByName()</code>方法主要完成了以下几件事：</p>
+<ol>
+<li>获取Bean对象中的非简单属性名，即类型为对象类型的属性，<code>String</code>、<code>Enum</code>、<code>Date</code>、<code>URI/URL</code>、<code>Number</code>的继承类如<code>Integer/Long</code>、<code>byte/short/int</code>等基本类型、<code>Locale</code>、以上所有类型的数组形式。</li>
+<li>遍历那些非简单属性名，如果容器中包含该名称对应的Bean，则递归实例化该Bean（也就是调用<code>getBean()</code>方法）</li>
+<li>将递归获取到的Bean存入到属性值列表<code>PropertyValues</code>中</li>
+<li>注册依赖（就是建立映射关系）</li>
+</ol>
+<p><code>autowireByType()</code>方法比<code>autowireByName()</code>方法复杂一些，因为相同类型的Bean可能有多个，它最核心的思路如下：</p>
+<ol>
+<li>根据类型查找所有合适的候选Bean。比如说我们的成员变量是<code>Dao</code>类型的，那么此时<code>MongoDao</code>和<code>MySQLDao</code>这两个Bean可能都属于合适的候选项，因为它们都实现了<code>Dao</code>接口。</li>
+<li>如果没有找到合适的候选Bean，并且<code>autowire</code>的<code>require</code>属性为<code>true</code>，则直接抛出异常</li>
+<li>当候选者不唯一时，则依次根据<code>Primary</code>、<code>Priority</code>决定最终的候选Bean（此时拿到了<code>autowiredBeanName</code>和<code>instanceCandidate</code>）</li>
+<li>当候选者唯一时，可以直接决定候选Bean（此时拿到了<code>autowiredBeanName</code>和<code>instanceCandidate</code>）</li>
+<li>候选Bean可能并没有实例化，也就是<code>instanceCandidate</code>仅仅为<code>Class</code>类型，比如说是<code>MySQLDao.class</code>，此时根据<code>beanFactory.getBean(autowiredBeanName)</code>方法实例化该Bean</li>
+<li>返回已实例化好的Bean</li>
+</ol>
+<p>接下来就和<code>autowireByName()</code>方法一样了，将获取到的Bean存入到属性值列表<code>PropertyValues</code>中，并且注册这个依赖关系。此时，<code>&lt;property&gt;</code>标签表示的属性和自动注入的属性都已经解析到<code>PropertyValues</code>中了，调用<code>applyPropertyValues()</code>开始真正的属性注入，该方法核心步骤如下：</p>
+<ol>
+<li>将<code>ref</code>（在之前解析标签时将其封装成了<code>RuntimeBeanReference</code>）解析为具体的对象，将<code>&lt;list&gt;</code>标签转换为<code>List</code>对象，还会解析<code>&lt;set/&gt;</code>、<code>&lt;map/&gt;</code>、<code>&lt;array/&gt;</code>等标签。</li>
+<li>对属性值的类型进行转换，比如将<code>String</code>类型的属性值<code>&quot;123&quot;</code>转换为<code>Integer</code>类型的<code>123</code></li>
+<li>反射设置<code>PropertyValues</code>中的所有属性</li>
+</ol>
+<p>至此，属性值已经注入到Bean中了。</p>
+<h3 id="initializeBean"><a href="#initializeBean" class="headerlink" title="initializeBean"></a>initializeBean</h3><p>填充完属性，接下来就是调用初始化方法，该方法的步骤如下：</p>
+<ol>
+<li>激活<code>Aware</code>方法：Bean可以实现<code>Aware</code>接口，从而对当前环境进行感知（就是实现了<code>setXXX()</code>方法）。在这里，会针对<code>BeanNameAware</code>、<code>BeanClassLoaderAware</code>、<code>BeanFactoryAware</code>三种<code>Aware</code>接口进行判断，将一些值设置到当前Bean中。</li>
+<li>调用<code>postProcessBeforeInitialization()</code>方法</li>
+<li>调用<code>invokeInitMethods()</code>方法：<br> 3.1. 如果Bean实现了<code>InitializingBean</code>接口，那么会先调用该接口的<code>afterPropertiesSet()</code>方法<br>3.2. 检查是否指定了<code>init-method</code>，如果指定了则通过反射机制调用<code>init-method</code>方法</li>
+<li>调用<code>postProcessAfterInitialization()</code>方法</li>
+</ol>
+<p>至此，几个核心步骤就都介绍完了。</p>
+<h2 id="Simple-IoC实现"><a href="#Simple-IoC实现" class="headerlink" title="Simple IoC实现"></a>Simple IoC实现</h2><p>Simple IoC的实现大体思路上与Spring IoC一致，但是尚不支持<code>&lt;list/&gt;</code>等一些集合标签，并且不像Spring实现了一套类型转换体系，这里直接使用了<code>apache</code>的<code>BeanUtils</code>完成类型转换相关的操作。除此之外，暂时还未实现<code>initializeBean()</code>相关的逻辑。</p>
+<h2 id="快速开始"><a href="#快速开始" class="headerlink" title="快速开始"></a>快速开始</h2><p>第一个测试是模拟登陆接口的场景，分为<code>Controller</code>、<code>Service</code>、<code>Dao</code>三层，XML配置文件如下：<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">beans</span> <span class="attr">xmlns</span>=<span class="string">"http://www.springframework.org/schema/beans"</span> <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans-2.0.xsd"</span>&gt;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	<span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"loginController"</span> <span class="attr">class</span>=<span class="string">"cn.hecenjie.simpleioc.tests.objects.login.LoginController"</span>&gt;</span></span><br><span class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"loginService"</span> <span class="attr">ref</span>=<span class="string">"loginService"</span> /&gt;</span></span><br><span class="line">	<span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line">	</span><br><span class="line">	<span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"loginService"</span> <span class="attr">class</span>=<span class="string">"cn.hecenjie.simpleioc.tests.objects.login.LoginServiceImpl"</span>&gt;</span></span><br><span class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"userDao"</span> <span class="attr">ref</span>=<span class="string">"userDao"</span> /&gt;</span></span><br><span class="line">	<span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line">	</span><br><span class="line">	<span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"userDao"</span> <span class="attr">class</span>=<span class="string">"cn.hecenjie.simpleioc.tests.objects.login.UserDao"</span>/&gt;</span></span><br><span class="line">	</span><br><span class="line"><span class="tag">&lt;/<span class="name">beans</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>测试代码如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testGetBean</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    ResourceLoader resourceLoader = <span class="keyword">new</span> FileSystemResourceLoader();</span><br><span class="line">    Resource resource = resourceLoader.getResource(<span class="string">"C:\\Users\\canjie\\Desktop\\login.xml"</span>);</span><br><span class="line">    DefaultListableBeanFactory factory = <span class="keyword">new</span> DefaultListableBeanFactory();</span><br><span class="line">    BeanDefinitionReader beanDefinitionReader = <span class="keyword">new</span> XmlBeanDefinitionReader(factory);</span><br><span class="line">    beanDefinitionReader.loadBeanDefinitions(resource);</span><br><span class="line">    LoginController loginController = (LoginController) factory.getBean(<span class="string">"loginController"</span>);</span><br><span class="line">    assertEquals(loginController.login(<span class="string">"Lihua"</span>, <span class="string">"123456789"</span>), <span class="keyword">true</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>第二个测试是针对循环依赖问题的，XML配置文件如下：<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">beans</span> <span class="attr">xmlns</span>=<span class="string">"http://www.springframework.org/schema/beans"</span> <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans-2.0.xsd"</span>&gt;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	<span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"person"</span> <span class="attr">class</span>=<span class="string">"cn.hecenjie.simpleioc.tests.objects.persons.Person"</span>&gt;</span></span><br><span class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"name"</span> <span class="attr">value</span>=<span class="string">"Lihua"</span> /&gt;</span></span><br><span class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"age"</span> <span class="attr">value</span>=<span class="string">"18"</span> /&gt;</span></span><br><span class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"idCard"</span> <span class="attr">ref</span>=<span class="string">"idCard"</span> /&gt;</span></span><br><span class="line">	<span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line">	</span><br><span class="line">	<span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"idCard"</span> <span class="attr">class</span>=<span class="string">"cn.hecenjie.simpleioc.tests.objects.persons.IdCard"</span>&gt;</span></span><br><span class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"id"</span> <span class="attr">value</span>=<span class="string">"441301188875468912"</span> /&gt;</span></span><br><span class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"owner"</span> <span class="attr">ref</span>=<span class="string">"person"</span> /&gt;</span></span><br><span class="line">	<span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line">	</span><br><span class="line"><span class="tag">&lt;/<span class="name">beans</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>测试代码如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testCyclicDependence</span><span class="params">()</span></span>&#123;</span><br><span class="line">    ResourceLoader resourceLoader = <span class="keyword">new</span> FileSystemResourceLoader();</span><br><span class="line">    Resource resource = resourceLoader.getResource(<span class="string">"C:\\Users\\canjie\\Desktop\\persons.xml"</span>);</span><br><span class="line">    DefaultListableBeanFactory factory = <span class="keyword">new</span> DefaultListableBeanFactory();</span><br><span class="line">    BeanDefinitionReader beanDefinitionReader = <span class="keyword">new</span> XmlBeanDefinitionReader(factory);</span><br><span class="line">    beanDefinitionReader.loadBeanDefinitions(resource);</span><br><span class="line">    Person person = (Person) factory.getBean(<span class="string">"person"</span>);</span><br><span class="line">    IdCard idCard = (IdCard) factory.getBean(<span class="string">"idCard"</span>);</span><br><span class="line">    assertEquals(person.getName(), <span class="string">"Lihua"</span>);</span><br><span class="line">    assertEquals(person.getAge(), <span class="number">18</span>);</span><br><span class="line">    assertEquals(person.getIdCard(), idCard);</span><br><span class="line">    assertEquals(idCard.getId(), <span class="number">441301188875468912L</span>);</span><br><span class="line">    assertEquals(idCard.getOwner(), person);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/05/23/ApplicationContext源码分析/">ApplicationContext体系分析</a>
+            
+            
+            <a class="next" rel="next" href="/2019/05/19/Simple-IoC开发日志：BeanDefinition加载/">Simple IoC开发日志：注册BeanDefinitions</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

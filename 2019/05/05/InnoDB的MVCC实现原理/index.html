@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>InnoDB的MVCC实现原理 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">InnoDB的MVCC实现原理</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">May 5, 2019&nbsp;&nbsp;21:45:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/MySQL/">MySQL</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="锁的种类"><a href="#锁的种类" class="headerlink" title="锁的种类"></a>锁的种类</h2><p>在数据库中经常能听到各种各样的锁，比如说悲观锁、乐观锁、行锁、表锁等等，但实际上前两者是从思想上进行划分的，而后两者是从锁粒度上进行划分的，真正的锁有共享锁和排他锁，也就是常说的读锁（S锁）和写锁（X锁）。</p>
+<h2 id="封锁协议"><a href="#封锁协议" class="headerlink" title="封锁协议"></a>封锁协议</h2><p>在运用X锁和S锁对数据对象进行加锁时，还需要约定一些规则，例如何时申请X锁或S锁、持锁时间、何时释放等，这些规则称为封锁协议，对封锁方式规定不同的规则，就形成了各种不同的封锁协议。</p>
+<h3 id="一级封锁协议"><a href="#一级封锁协议" class="headerlink" title="一级封锁协议"></a>一级封锁协议</h3><p>一级封锁协议即事务在修改某行数据时必须先对其加X锁，直到事务结束才释放，事务结束包括正常结束（COMMIT）和非正常结束（ROLLBACK）。一级封锁协议可以防止丢失修改，因为此时别的事务要想修改该数据将会阻塞到对方释放X锁，但如果仅仅是读数据不对其进行修改，是不需要加锁的，也就不能保证可重复读和脏读问题。</p>
+<h3 id="二级封锁协议"><a href="#二级封锁协议" class="headerlink" title="二级封锁协议"></a>二级封锁协议</h3><p>二级封锁协议即在一级封锁协议的基础上，事务读取某数据之前必须先对其加S锁，读完后即可释放S锁。二级封锁协议除了防止丢失修改，还可以进一步防止脏读问题，但在二级封锁协议中，由于读完数据后即可释放S锁，所以它不能保证可重复读。</p>
+<h3 id="三级封锁协议"><a href="#三级封锁协议" class="headerlink" title="三级封锁协议"></a>三级封锁协议</h3><p>三级封锁协议即在一级封锁协议的基础上，事务读取某数据之前必须先对其加S锁，直到事务结束才释放。三级封锁协议除了防止丢失修改和脏读问题以外，还进一步防止了不可重复读。</p>
+<h2 id="两段锁协议"><a href="#两段锁协议" class="headerlink" title="两段锁协议"></a>两段锁协议</h2><p>一次性锁协议指的是在事务开始时，一次性申请所有的锁，之后不会再申请任何锁，如果其中某个锁不可用，则整个申请就不成功，事务就不会执行，一次性释放所有的锁。一次性锁协议不会产生死锁的问题，但事务的并发度不高。</p>
+<p>InnoDB遵循的是两段锁协议，将事务分成两个阶段，加锁阶段和解锁阶段（所以叫两段锁）：</p>
+<ul>
+<li>加锁阶段：事务只能加锁，也可以操作数据，但不能解锁，直到事务释放第一个锁，就进入解锁阶段</li>
+<li>解锁阶段：事务只能解锁，也可以操作数据，但不能加锁</li>
+</ul>
+<p>两段锁协议使得事务具有较高的并发度，但是没有解决死锁的问题，因为它在加锁阶段没有顺序要求，如两个事务分别申请了A、B锁，接着又申请了对方的锁，此时进入死锁状态。</p>
+<h2 id="多版本并发控制（MVCC）"><a href="#多版本并发控制（MVCC）" class="headerlink" title="多版本并发控制（MVCC）"></a>多版本并发控制（MVCC）</h2><p>为了提高并发性能，让读写之间能不用相互阻塞，InnoDB实现了MVCC，不再单纯的使用行锁来进行数据库的并发控制，取而代之的是把数据库的行锁与行的多个版本结合起来，只需要很小的开销，就可以实现非锁定读，从而大大提高数据库系统的并发性能。</p>
+<h3 id="redo-undo-log"><a href="#redo-undo-log" class="headerlink" title="redo/undo log"></a>redo/undo log</h3><p>为了支持事务，InnoDB实现了redo log与undo log：</p>
+<ul>
+<li>redo log：保存执行的sql语句到一个指定的log文件，当MySQL执行recovery时重新执行redo log记录的sql操作即可，当客户端执行每条sql时，redo log首先会被写入log buffer，当客户端执行COMMIT时，log buffer中的内容会被视情况刷新到磁盘。redo log在磁盘上作为一个独立的文件存在，即InnoDB的log文件。</li>
+<li>undo log：与redo log相反，undo log是为回滚而用，把该行修改前的值copy到undo buffer，在适合的时间把undo buffer中的内容刷新到磁盘。与redo log不同的是，磁盘上不存在单独的undo log文件，所有的undo log均存放在.ibd数据文件中。</li>
+</ul>
+<h3 id="隐藏字段"><a href="#隐藏字段" class="headerlink" title="隐藏字段"></a>隐藏字段</h3><p>在MySQL中，InnoDB为每行记录都实现了三个隐藏字段：</p>
+<ul>
+<li>6字节的<code>DB_TRX_ID</code>：事务ID，每处理一个事务，其值自动+1</li>
+<li>7字节的<code>DATA_ROLL_PTR</code>：回滚指针，指向该行修改前的上一个历史版本</li>
+<li>6字节的<code>DB_ROW_ID</code>：如果表中没有显示定义主键或者没有唯一非空索引时InnoDB会自动创建</li>
+</ul>
+<p>当插入一条新数据时，记录上对应的回滚指针为null：</p>
+<p><img src="http://img.hecenjie.cn/20170401151910811.jpg" alt></p>
+<p>更新记录时，原记录将被放入到undo log中，并通过<code>DATA_ROLL_PT</code>指向该记录：</p>
+<p><img src="http://img.hecenjie.cn/20170401151927986.jpg" alt></p>
+<p>MySQL就是根据记录上的回滚指针及事务ID判断记录是否可见，如果不可见则按照<code>DATA_ROLL_PT</code>继续回溯查找。</p>
+<h3 id="通过read-view判断行记录是否可见"><a href="#通过read-view判断行记录是否可见" class="headerlink" title="通过read view判断行记录是否可见"></a>通过read view判断行记录是否可见</h3><p><img src="http://img.hecenjie.cn/20170401151940733.jpg" alt>)</p>
+<p>相关源码如下：<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">bool</span> <span class="title">changes_visible</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params"><span class="keyword">trx_id_t</span>    id,</span></span></span><br><span class="line"><span class="function"><span class="params"><span class="keyword">const</span> <span class="keyword">table_name_t</span>&amp; name)</span> <span class="keyword">const</span></span></span><br><span class="line"><span class="function"><span class="title">MY_ATTRIBUTE</span><span class="params">((warn_unused_result))</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">ut_ad(id &gt; <span class="number">0</span>);</span><br><span class="line"><span class="comment">//如果ID小于Read View中最小的, 则这条记录是可以看到。说明这条记录是在select这个事务开始之前就结束的</span></span><br><span class="line"><span class="keyword">if</span> (id &lt; m_up_limit_id || id == m_creator_trx_id) &#123;</span><br><span class="line"><span class="keyword">return</span>(<span class="literal">true</span>);</span><br><span class="line">&#125;</span><br><span class="line">check_trx_id_sanity(id, name);</span><br><span class="line"><span class="comment">//如果比Read View中最大的还要大，则说明这条记录是在事务开始之后进行修改的，所以此条记录不应查看到</span></span><br><span class="line"><span class="keyword">if</span> (id &gt;= m_low_limit_id) &#123;</span><br><span class="line"><span class="keyword">return</span>(<span class="literal">false</span>);</span><br><span class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> (m_ids.empty()) &#123;</span><br><span class="line"><span class="keyword">return</span>(<span class="literal">true</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">ids_t</span>::value_type*    p = m_ids.data();</span><br><span class="line"><span class="keyword">return</span>(!<span class="built_in">std</span>::binary_search(p, p + m_ids.size(), id)); <span class="comment">//判断是否在Read View中， 如果在说明在创建Read View时 此条记录还处于活跃状态则不应该查询到，否则说明创建Read View是此条记录已经是不活跃状态则可以查询到</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里需要注意的是，InnoDB的MVCC仅针对RR和RC这两种隔离级别而言。对于<code>Read Uncommitted</code>，由于读取到的总是最新的数据，不管该记录是否已经提交，因此不会遍历版本链，也就不需要MVCC；对于<code>Serializable</code>级别，从MVCC并发控制退化为基于锁的并发控制，读加共享锁，写加排他锁，读写相互阻塞。而对于RR和RC级别，它们对于MVCC的可见性实现也是不同的：</p>
+<ul>
+<li>RC：事务内的每个查询语句都会重新创建read view，这样就会产生不可重复读的现象发生</li>
+<li>RR：事务开始时创建read view，直到事务结束的这段时间内每一次查询都不会重建read view，从而实现了可重复读</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>MVCC是一种用来解决读-写冲突的无锁并发控制机制，它所支持的RR和RC两种隔离级别，读写之间不会被阻塞，大大提高了并发性能。InnoDB实现的四种隔离级别，总体就是通过MVCC+2PL实现的。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://blog.csdn.net/joy0921/article/details/80128857" target="_blank" rel="noopener">MVCC原理探究及MySQL源码实现分析</a></li>
+<li><a href="http://www.cnblogs.com/chenpingzhao/p/5065316.html" target="_blank" rel="noopener">【mysql】关于innodb中MVCC的一些理解</a></li>
+<li><a href="https://tech.meituan.com/2014/08/20/innodb-lock.html" target="_blank" rel="noopener">Innodb中的事务隔离级别和锁的关系</a></li>
+<li><a href="https://www.zhihu.com/question/27876575" target="_blank" rel="noopener">乐观锁和 MVCC 的区别？</a></li>
+<li><a href="https://www.zhihu.com/question/263820564" target="_blank" rel="noopener">MySQL 是如何实现四大隔离级别的？</a></li>
+<li><a href="https://www.cnblogs.com/zszmhd/p/3365220.html" target="_blank" rel="noopener">两阶段锁协议</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/InnoDB/"># InnoDB</a>
+                    
+                        <a href="/tags/MVCC/"># MVCC</a>
+                    
+                        <a href="/tags/封锁协议/"># 封锁协议</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/05/06/Java中的装箱与拆箱/">Java中的装箱与拆箱</a>
+            
+            
+            <a class="next" rel="next" href="/2019/05/04/Java序列化与反序列化机制/">Java序列化与反序列化机制</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>@Autowired源码分析 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">@Autowired源码分析</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">May 24, 2019&nbsp;&nbsp;14:24:18</a>
+                        </span>
+                    
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="AutowiredAnnotationBeanPostProcessor"><a href="#AutowiredAnnotationBeanPostProcessor" class="headerlink" title="AutowiredAnnotationBeanPostProcessor"></a>AutowiredAnnotationBeanPostProcessor</h2><p><code>@Autowired</code>注解的逻辑是由<code>AutowiredAnnotationBeanPostProcessor</code>实现的，<code>AutowiredAnnotationBeanPostProcessor</code>不是一个简单的<code>BeanPostProcessor</code>，而是一个实现了多重接口的<code>BeanPostProcessor</code>，它主要实现了以下两个接口：</p>
+<ul>
+<li><code>InstantiationAwareBeanPostProcessor</code>：对应<code>postProcessPropertyValues()</code>方法</li>
+<li><code>MergedBeanDefinitionPostProcessor</code>：对应<code>findAutowiringMetadata</code>方法</li>
+</ul>
+<p>下面我们分别来看看这两个接口的实现是如何完成<code>@Autowired</code>的逻辑的。</p>
+<h2 id="作为MergedBeanDefinitionPostProcessor的行为"><a href="#作为MergedBeanDefinitionPostProcessor的行为" class="headerlink" title="作为MergedBeanDefinitionPostProcessor的行为"></a>作为MergedBeanDefinitionPostProcessor的行为</h2><p>首先，我们从<code>ApplicationContext</code>体系最核心的<code>refresh()</code>方法说起：<br><img src="http://blog.default.nanwulife.com/162cc16e4b0eee57.jpg" alt></p>
+<p><code>refresh()</code>方法中<code>registerBeanPostProcessors(beanFactory)</code>这一行代码完成了对<code>AutowiredAnnotationBeanPostProcessor</code>的注册，当执行<code>finishBeanFactoryInitialization(beanFactory)</code>方法时，会实例化所有非懒加载的单例Bean，这个过程中会调用<code>AbstractAutowireCapableBeanFactory</code>类的<code>doCreateBean()</code>方法，其中在使用合适的实例化策略实例化完Bean之后，会有下面这么一段代码：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> Object <span class="title">doCreateBean</span><span class="params">(<span class="keyword">final</span> String beanName, <span class="keyword">final</span> RootBeanDefinition mbd, <span class="keyword">final</span> Object[] args)</span></span></span><br><span class="line"><span class="function">            <span class="keyword">throws</span> BeanCreationException </span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="keyword">synchronized</span> (mbd.postProcessingLock) &#123;</span><br><span class="line">        <span class="keyword">if</span> (!mbd.postProcessed) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                applyMergedBeanDefinitionPostProcessors(mbd, beanType, beanName); <span class="comment">// 重点关注这一行</span></span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">catch</span> (Throwable ex) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> BeanCreationException(mbd.getResourceDescription(), beanName,</span><br><span class="line">                        <span class="string">"Post-processing of merged bean definition failed"</span>, ex);</span><br><span class="line">            &#125;</span><br><span class="line">            mbd.postProcessed = <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">applyMergedBeanDefinitionPostProcessors</span><span class="params">(RootBeanDefinition mbd, Class&lt;?&gt; beanType, String beanName)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (BeanPostProcessor bp : getBeanPostProcessors()) &#123;</span><br><span class="line">        <span class="keyword">if</span> (bp <span class="keyword">instanceof</span> MergedBeanDefinitionPostProcessor) &#123;</span><br><span class="line">            MergedBeanDefinitionPostProcessor bdp = (MergedBeanDefinitionPostProcessor) bp;</span><br><span class="line">            bdp.postProcessMergedBeanDefinition(mbd, beanType, beanName);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在<code>applyMergedBeanDefinitionPostProcessors()</code>方法中，会判断当前的<code>BeanPostProcessor</code>是否是<code>MergedBeanDefinitionPostProcessor</code>类型的，如果是的话则调用它的<code>postProcessMergedBeanDefinition()</code>方法（显然，这里会判断为真，因为<code>AutowiredAnnotationBeanPostProcessor</code>实现了<code>MergedBeanDefinitionPostProcessor</code>）。我们再来看看<code>AutowiredAnnotationBeanPostProcessor</code>对该方法的实现：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">postProcessMergedBeanDefinition</span><span class="params">(RootBeanDefinition beanDefinition, Class&lt;?&gt; beanType, String beanName)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (beanType != <span class="keyword">null</span>) &#123;</span><br><span class="line">        InjectionMetadata metadata = findAutowiringMetadata(beanName, beanType, <span class="keyword">null</span>);</span><br><span class="line">        metadata.checkConfigMembers(beanDefinition);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> InjectionMetadata <span class="title">findAutowiringMetadata</span><span class="params">(String beanName, Class&lt;?&gt; clazz, PropertyValues pvs)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    String cacheKey = (StringUtils.hasLength(beanName) ? beanName : clazz.getName());</span><br><span class="line">    InjectionMetadata metadata = <span class="keyword">this</span>.injectionMetadataCache.get(cacheKey); <span class="comment">// 先从缓存中找 InjectionMetadata，诸如 @Autowire，@Inject 等</span></span><br><span class="line">    <span class="keyword">if</span> (InjectionMetadata.needsRefresh(metadata, clazz)) &#123;                  <span class="comment">// 如果找不到，则从这里开始，通过分析 bean，去找到它的 InjectionMetadata</span></span><br><span class="line">        <span class="keyword">synchronized</span> (<span class="keyword">this</span>.injectionMetadataCache) &#123;</span><br><span class="line">            metadata = <span class="keyword">this</span>.injectionMetadataCache.get(cacheKey);</span><br><span class="line">            <span class="keyword">if</span> (InjectionMetadata.needsRefresh(metadata, clazz)) &#123;</span><br><span class="line">                <span class="keyword">if</span> (metadata != <span class="keyword">null</span>) &#123;</span><br><span class="line">                    metadata.clear(pvs);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    metadata = buildAutowiringMetadata(clazz);              <span class="comment">// 重点关注：去找，并构建其 InjectionMetadata 对象</span></span><br><span class="line">                    <span class="keyword">this</span>.injectionMetadataCache.put(cacheKey, metadata);    <span class="comment">// 如果找到了，将其放入 injectionMetadataCache 中返回；</span></span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">catch</span> (NoClassDefFoundError err) &#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"Failed to introspect bean class ["</span> + clazz.getName() +</span><br><span class="line">                            <span class="string">"] for autowiring metadata: could not find class that it depends on"</span>, err);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> metadata;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><code>findAutowiringMetadata()</code>方法先从缓存中判断否已经存在该<code>InjectionMetadata</code>了，如果存在，且无需进行刷新，则返回；如果缓存中不存在（或者存在但需要刷新），那么就需要去构建一个<code>InjectionMetadata</code>。</p>
+<p>接下来就是比较核心的部分了，通过<code>buildAutowiringMetadata()</code>方法构建<code>InjectionMetadata</code>对象：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> InjectionMetadata <span class="title">buildAutowiringMetadata</span><span class="params">(<span class="keyword">final</span> Class&lt;?&gt; clazz)</span> </span>&#123;</span><br><span class="line">    LinkedList&lt;InjectionMetadata.InjectedElement&gt; elements = <span class="keyword">new</span> LinkedList&lt;InjectionMetadata.InjectedElement&gt;();</span><br><span class="line">    Class&lt;?&gt; targetClass = clazz;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        <span class="keyword">final</span> LinkedList&lt;InjectionMetadata.InjectedElement&gt; currElements =</span><br><span class="line">                <span class="keyword">new</span> LinkedList&lt;InjectionMetadata.InjectedElement&gt;();</span><br><span class="line">        <span class="comment">// 1. 通过反射从 targetClass 的 field 中去找注解</span></span><br><span class="line">        ReflectionUtils.doWithLocalFields(targetClass, <span class="keyword">new</span> ReflectionUtils.FieldCallback() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">doWith</span><span class="params">(Field field)</span> <span class="keyword">throws</span> IllegalArgumentException, IllegalAccessException </span>&#123;</span><br><span class="line">                AnnotationAttributes ann = findAutowiredAnnotation(field); <span class="comment">// 是否存在 @Autowired</span></span><br><span class="line">                <span class="keyword">if</span> (ann != <span class="keyword">null</span>) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (Modifier.isStatic(field.getModifiers())) &#123;</span><br><span class="line">                        <span class="keyword">if</span> (logger.isWarnEnabled()) &#123;</span><br><span class="line">                            logger.warn(<span class="string">"Autowired annotation is not supported on static fields: "</span> + field);</span><br><span class="line">                        &#125;</span><br><span class="line">                        <span class="keyword">return</span>; <span class="comment">// 如果当前处理的属性是静态属性，则直接返回</span></span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="keyword">boolean</span> required = determineRequiredStatus(ann);</span><br><span class="line">                    currElements.add(<span class="keyword">new</span> AutowiredFieldElement(field, required));</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        <span class="comment">// 2. 通过反射从 targetClass 的 method 中去找注解</span></span><br><span class="line">        ReflectionUtils.doWithLocalMethods(targetClass, <span class="keyword">new</span> ReflectionUtils.MethodCallback() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">doWith</span><span class="params">(Method method)</span> <span class="keyword">throws</span> IllegalArgumentException, IllegalAccessException </span>&#123;</span><br><span class="line">                Method bridgedMethod = BridgeMethodResolver.findBridgedMethod(method);</span><br><span class="line">                <span class="keyword">if</span> (!BridgeMethodResolver.isVisibilityBridgeMethodPair(method, bridgedMethod)) &#123;</span><br><span class="line">                    <span class="keyword">return</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="comment">// 上述代码处理 bridged method 相关情况；可忽略；</span></span><br><span class="line">                AnnotationAttributes ann = findAutowiredAnnotation(bridgedMethod); <span class="comment">// 是否存在 @Autowired</span></span><br><span class="line">                <span class="keyword">if</span> (ann != <span class="keyword">null</span> &amp;&amp; method.equals(ClassUtils.getMostSpecificMethod(method, clazz))) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (Modifier.isStatic(method.getModifiers())) &#123;</span><br><span class="line">                        <span class="keyword">if</span> (logger.isWarnEnabled()) &#123;</span><br><span class="line">                            logger.warn(<span class="string">"Autowired annotation is not supported on static methods: "</span> + method);</span><br><span class="line">                        &#125;</span><br><span class="line">                        <span class="keyword">return</span>; <span class="comment">// 如果方法是静态的，则直接返回；</span></span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="keyword">if</span> (method.getParameterTypes().length == <span class="number">0</span>) &#123;</span><br><span class="line">                        <span class="keyword">if</span> (logger.isWarnEnabled()) &#123;</span><br><span class="line">                            logger.warn(<span class="string">"Autowired annotation should only be used on methods with parameters: "</span> +</span><br><span class="line">                                    method); <span class="comment">// 警告，方法参数长度为 0</span></span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="keyword">boolean</span> required = determineRequiredStatus(ann);</span><br><span class="line">                    PropertyDescriptor pd = BeanUtils.findPropertyForMethod(bridgedMethod, clazz);</span><br><span class="line">                    currElements.add(<span class="keyword">new</span> AutowiredMethodElement(method, required, pd));</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line"></span><br><span class="line">        elements.addAll(<span class="number">0</span>, currElements);</span><br><span class="line">        targetClass = targetClass.getSuperclass();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> (targetClass != <span class="keyword">null</span> &amp;&amp; targetClass != Object<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> InjectionMetadata(clazz, elements);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>该方法分为两部分，通过工具类<code>ReflectionUtils</code>分别从当前Bean实例的<code>fields</code>和<code>methods</code>中去查找<code>@Autowired</code>注解：</p>
+<ol>
+<li>从<code>fields</code>找<code>@Autowired</code>注解，若找到，则创建<code>AutowiredFieldElement</code>实例，并放入<code>currElements</code>队列中</li>
+<li>从<code>methods</code>中找<code>@Autowired</code>注解，若找到，则创建<code>AutowiredMethodElement</code>实例，并放入<code>currElements</code>队列中</li>
+<li>最后，通过Bean的Class对象和<code>curreElements</code>构建<code>InjectionMetadata</code>实例并返回</li>
+</ol>
+<p>此时，将构建好的<code>InjectionMetadata</code>加入缓存<code>injectionMetadataCache</code>中并返回。</p>
+<h2 id="作为InstantiationAwareBeanPostProcessor的行为"><a href="#作为InstantiationAwareBeanPostProcessor的行为" class="headerlink" title="作为InstantiationAwareBeanPostProcessor的行为"></a>作为InstantiationAwareBeanPostProcessor的行为</h2><p>同样，在<code>doCreateBean()</code>方法中执行<code>populateBean()</code>方法填充属性时，<code>populateBean()</code>方法中有如下一段代码：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (hasInstAwareBpps || needsDepCheck) &#123;</span><br><span class="line">	<span class="keyword">if</span> (pvs == <span class="keyword">null</span>) &#123;</span><br><span class="line">		pvs = mbd.getPropertyValues();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	PropertyDescriptor[] filteredPds = filterPropertyDescriptorsForDependencyCheck(bw, mbd.allowCaching);</span><br><span class="line">	<span class="keyword">if</span> (hasInstAwareBpps) &#123;</span><br><span class="line">		<span class="keyword">for</span> (BeanPostProcessor bp : getBeanPostProcessors()) &#123;</span><br><span class="line">			<span class="keyword">if</span> (bp <span class="keyword">instanceof</span> InstantiationAwareBeanPostProcessor) &#123;</span><br><span class="line">				InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;</span><br><span class="line">				pvs = ibp.postProcessPropertyValues(pvs, filteredPds, bw.getWrappedInstance(), beanName);	<span class="comment">// 重点关注这一行</span></span><br><span class="line">				<span class="keyword">if</span> (pvs == <span class="keyword">null</span>) &#123;</span><br><span class="line">					<span class="keyword">return</span>;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure></p>
+<p>其中，<code>pvs = ibp.postProcessPropertyValues()</code>这行代码调用了<code>InstantiationAwareBeanPostProcessor</code>的接口方法，继续跟进去看。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> PropertyValues <span class="title">postProcessPropertyValues</span><span class="params">(PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName)</span> <span class="keyword">throws</span> BeanCreationException </span>&#123;</span><br><span class="line">	<span class="comment">// &lt;1&gt;</span></span><br><span class="line">	InjectionMetadata metadata = findAutowiringMetadata(beanName, bean.getClass(), pvs);</span><br><span class="line">	<span class="keyword">try</span> &#123;</span><br><span class="line">       <span class="comment">// &lt;2&gt;</span></span><br><span class="line">		metadata.inject(bean, beanName, pvs);</span><br><span class="line">	&#125; <span class="keyword">catch</span> (BeanCreationException ex) &#123;</span><br><span class="line">		<span class="keyword">throw</span> ex;</span><br><span class="line">	&#125; <span class="keyword">catch</span> (Throwable ex) &#123;</span><br><span class="line">		<span class="comment">// ...</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> pvs;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在刚实例化完Bean之后，作为<code>MergedBeanDefinitionPostProcessor</code>，已经调用过<code>findAutowiringMetadata()</code>方法，即从当前Bean对象中的属性和方法中找到了<code>@Autowired</code>注解，并将它们封装成了<code>InjectionMetadata</code>放入了缓存当中，因此，此处直接从缓存中就可以获取到该Bean对应的<code>InjectMetadata</code>。接下来就是通过<code>InjectMetadata</code>进行注入：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">inject</span><span class="params">(Object target, @Nullable String beanName, @Nullable PropertyValues pvs)</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">	Collection&lt;InjectedElement&gt; checkedElements = <span class="keyword">this</span>.checkedElements;</span><br><span class="line">	Collection&lt;InjectedElement&gt; elementsToIterate =</span><br><span class="line">			(checkedElements != <span class="keyword">null</span> ? checkedElements : <span class="keyword">this</span>.injectedElements);</span><br><span class="line">	<span class="keyword">if</span> (!elementsToIterate.isEmpty()) &#123;</span><br><span class="line">		<span class="keyword">for</span> (InjectedElement element : elementsToIterate) &#123;</span><br><span class="line">			<span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</span><br><span class="line">				logger.debug(<span class="string">"Processing injected element of bean '"</span> + beanName + <span class="string">"': "</span> + element);</span><br><span class="line">			&#125;</span><br><span class="line">			element.inject(target, beanName, pvs);	<span class="comment">// 重点关注</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">   </span><br><span class="line">	<span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">inject</span><span class="params">(Object target, @Nullable String requestingBeanName, @Nullable PropertyValues pvs)</span></span></span><br><span class="line"><span class="function">			<span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (<span class="keyword">this</span>.isField) &#123;</span><br><span class="line">			Field field = (Field) <span class="keyword">this</span>.member;</span><br><span class="line">			ReflectionUtils.makeAccessible(field);</span><br><span class="line">			field.set(target, getResourceToInject(target, requestingBeanName));	<span class="comment">// 重点关注</span></span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="keyword">if</span> (checkPropertySkipping(pvs)) &#123;</span><br><span class="line">				<span class="keyword">return</span>;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">try</span> &#123;</span><br><span class="line">				Method method = (Method) <span class="keyword">this</span>.member;</span><br><span class="line">				ReflectionUtils.makeAccessible(method);</span><br><span class="line">				method.invoke(target, getResourceToInject(target, requestingBeanName));	<span class="comment">// 重点关注</span></span><br><span class="line">			&#125; <span class="keyword">catch</span> (InvocationTargetException ex) &#123;</span><br><span class="line">				<span class="keyword">throw</span> ex.getTargetException();</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<p>由于<code>InjectionMetadata</code>对象本身包含了一系列的<code>AutowiredFieldElement</code>和<code>AutowiredMethodElement</code>，所以这里迭代<code>InjectedElement</code>并依次处理它们，而处理的逻辑都在<code>inject()</code>这一关键方法中，可以看到最终就是根据是属性还是方法来分别使用反射注入，并且对于方法而言，该方法会被调用。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://www.shangyang.me/2017/04/05/spring-core-container-sourcecode-analysis-annotation-autowired/" target="_blank" rel="noopener">Spring Core Container 源码分析五：@Autowired</a></li>
+<li><a href="https://juejin.im/entry/5ad3fda5f265da238d512a98" target="_blank" rel="noopener">深入理解Spring系列之十四：@Autowired是如何工作的</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/05/26/TCP与UDP的区别/">TCP与UDP的区别</a>
+            
+            
+            <a class="next" rel="next" href="/2019/05/24/破坏双亲委派模型/">破坏双亲委派模型</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

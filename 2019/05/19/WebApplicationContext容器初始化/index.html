@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>深入分析Spring MVC：WebApplicationContext容器初始化 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">深入分析Spring MVC：WebApplicationContext容器初始化</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">May 19, 2019&nbsp;&nbsp;12:39:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/Spring/">Spring</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="web-xml"><a href="#web-xml" class="headerlink" title="web.xml"></a>web.xml</h2><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- 省略非关键的配置 --&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- [1] Spring配置 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">listener</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">listener-class</span>&gt;</span>org.springframework.web.context.ContextLoaderListener<span class="tag">&lt;/<span class="name">listener-class</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">listener</span>&gt;</span></span><br><span class="line"><span class="comment">&lt;!-- 指定Spring Bean的配置文件所在目录，默认配置在WEB-INF目录下。该 &lt;context-param&gt; 标签会被设置到 ServletContext 中--&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">context-param</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">param-name</span>&gt;</span>contextConfigLocation<span class="tag">&lt;/<span class="name">param-name</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">param-value</span>&gt;</span>classpath:config/applicationContext.xml<span class="tag">&lt;/<span class="name">param-value</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">context-param</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- ====================================== --&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- [2] Spring MVC配置 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">servlet</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">servlet-name</span>&gt;</span>spring<span class="tag">&lt;/<span class="name">servlet-name</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">servlet-class</span>&gt;</span>org.springframework.web.servlet.DispatcherServlet<span class="tag">&lt;/<span class="name">servlet-class</span>&gt;</span></span><br><span class="line">    <span class="comment">&lt;!-- 可以自定义servlet.xml配置文件的位置和名称，默认为WEB-INF目录下，名称为[&lt;servlet-name&gt;]-servlet.xml，如spring-servlet.xml</span></span><br><span class="line"><span class="comment">    &lt;init-param&gt;</span></span><br><span class="line"><span class="comment">        &lt;param-name&gt;contextConfigLocation&lt;/param-name&gt;</span></span><br><span class="line"><span class="comment">        &lt;param-value&gt;/WEB-INF/spring-servlet.xml&lt;/param-value&gt; // 默认</span></span><br><span class="line"><span class="comment">    &lt;/init-param&gt;</span></span><br><span class="line"><span class="comment">    --&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">load-on-startup</span>&gt;</span>1<span class="tag">&lt;/<span class="name">load-on-startup</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">servlet</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">servlet-mapping</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">servlet-name</span>&gt;</span>spring<span class="tag">&lt;/<span class="name">servlet-name</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">url-pattern</span>&gt;</span>*.do<span class="tag">&lt;/<span class="name">url-pattern</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">servlet-mapping</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>[1]</code>处配置了<code>org.springframework.web.context.ContextLoaderListener</code>对象，它实现了<code>javax.servlet.ServletContextListener</code>接口，会初始化一个Root WebApplicationContext容器；</li>
+<li><code>[2]</code>处配置了<code>org.springframework.web.servlet.DispatcherServlet</code>对象，它实现了<code>javax.servlet.http.HttpServlet</code>，除了拦截我们制定的<code>*.do</code>请求外，也会初始化一个属于它的 Servlet WebApplicationContext 容器，并且这个容器是以 [1] 处的 Root 容器作为父容器。</li>
+</ul>
+<p>下面就以上两个容器进行分析，一个是业务容器，一个是Web容器。</p>
+<h2 id="Root-WebApplicationContext"><a href="#Root-WebApplicationContext" class="headerlink" title="Root WebApplicationContext"></a>Root WebApplicationContext</h2><p>Root WebApplicationContext也就是业务容器，用于加载业务逻辑相关的类，比如service、dao层的一些类。它的初始化是通过<code>ContextLoaderListener</code>来实现，在Servlet容器启动时，例如Tomcat、Jetty启动，则会被<code>ContextLoaderListener</code>监听到，从而调用<code>contextInitialized(ServletContextEvent event)</code>方法，初始化Root WebApplicationContext容器。它的核心配置如下：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- [1] Spring配置 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">listener</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">listener-class</span>&gt;</span>org.springframework.web.context.ContextLoaderListener<span class="tag">&lt;/<span class="name">listener-class</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">listener</span>&gt;</span></span><br><span class="line"><span class="comment">&lt;!-- 指定Spring Bean的配置文件所在目录。默认配置在WEB-INF目录下 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">context-param</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">param-name</span>&gt;</span>contextConfigLocation<span class="tag">&lt;/<span class="name">param-name</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">param-value</span>&gt;</span>classpath:config/applicationContext.xml<span class="tag">&lt;/<span class="name">param-value</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">context-param</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>如上，<code>ContextLoaderListener</code>可通过<code>ServletContext</code>获取到<code>contextConfigLocation</code>配置。这样，业务容器就可以加载<code>application.xml</code>配置文件了。</p>
+<h3 id="ContextLoaderListener"><a href="#ContextLoaderListener" class="headerlink" title="ContextLoaderListener"></a>ContextLoaderListener</h3><p><code>org.springframework.web.context.ContextLoaderListener</code>，实现<code>ServletContextListener</code>接口，继承<code>ContextLoader</code>类，上面说过，它实现了Servlet容器启动和关闭时，分别初始化和销毁<code>WebApplicationContext</code>容器。</p>
+<p><img src="http://blog.default.nanwulife.com/01.png" alt></p>
+<p>对于<code>ContextLoaderListener</code>，它的初始化和销毁的真正逻辑其实是由父类<code>ContextLoader</code>实现的。</p>
+<ul>
+<li><p>初始化<code>WebApplicationContext</code>容器：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ContextLoaderListener.java</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">contextInitialized</span><span class="params">(ServletContextEvent event)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 初始化 WebApplicationContext，调用父类实现的方法</span></span><br><span class="line">    initWebApplicationContext(event.getServletContext());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>销毁<code>WebApplicationContext</code>容器：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ContextLoaderListener.java</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">contextDestroyed</span><span class="params">(ServletContextEvent event)</span> </span>&#123;</span><br><span class="line">    closeWebApplicationContext(event.getServletContext());</span><br><span class="line">    ContextCleanupListener.cleanupAttributes(event.getServletContext());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="Servlet-WebApplicationContext"><a href="#Servlet-WebApplicationContext" class="headerlink" title="Servlet WebApplicationContext"></a>Servlet WebApplicationContext</h2><p>Servlet WebApplicationContext也就是Web容器，它的初始化是在<code>DispatcherServlet</code>初始化的过程中执行，并且会将业务容器作为父容器，之所以这样是因为Web容器中的一些Bean会依赖于业务容器中的Bean，比如我们的controller层接口通常会依赖service层的业务逻辑类。</p>
+<p><img src="http://blog.default.nanwulife.com/01%20%281%29.png" alt></p>
+<p>以下是这个继承体系中各个类负责的任务，结构还是比较清晰的：</p>
+<ul>
+<li><p><code>HttpServletBean</code>：覆写了父类<code>HttpServlet</code>中的<code>init()</code>方法，是创建Web容器的入口，负责将<code>ServletConfig</code>设置到<code>HttpServletBean</code>的子类对象中（比如<code>DispatcherServlet</code>）。类上的简单注释如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// HttpServletBean.java</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Simple extension of &#123;<span class="doctag">@link</span> javax.servlet.http.HttpServlet&#125; which treats</span></span><br><span class="line"><span class="comment"> * its config parameters (&#123;<span class="doctag">@code</span> init-param&#125; entries within the</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@code</span> servlet&#125; tag in &#123;<span class="doctag">@code</span> web.xml&#125;) as bean properties.</span></span><br><span class="line"><span class="comment"> */</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>FrameworkServlet</code>：覆写了父类<code>HttpServletBean</code>中的<code>initServletBean()</code>方法，负责初始化Servlet WebApplicationContext容器。类上的简单注释如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// FrameworkServlet.java</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Base servlet for Spring's web framework. Provides integration with</span></span><br><span class="line"><span class="comment"> * a Spring application context, in a JavaBean-based overall solution.</span></span><br><span class="line"><span class="comment"> */</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>DispatcherServlet</code>：负责初始化Spring MVC的各个组件，以及处理客户端的请求。类上的简单注释如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// DispatcherServlet.java</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Central dispatcher for HTTP request handlers/controllers, e.g. for web UI controllers</span></span><br><span class="line"><span class="comment"> * or HTTP-based remote service exporters. Dispatches to registered handlers for processing</span></span><br><span class="line"><span class="comment"> * a web request, providing convenient mapping and exception handling facilities.</span></span><br><span class="line"><span class="comment"> */</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="http://svip.iocoder.cn/Spring-MVC/context-init-Root-WebApplicationContext/" target="_blank" rel="noopener">精尽 Spring MVC 源码分析 —— 容器的初始化（一）之 Root WebApplicationContext 容器</a></li>
+<li><a href="http://svip.iocoder.cn/Spring-MVC/context-init-Servlet-WebApplicationContext/#5-SourceFilteringListener" target="_blank" rel="noopener">精尽 Spring MVC 源码分析 —— 容器的初始化（二）之 Servlet WebApplicationContext 容器</a></li>
+<li><a href="https://www.tianxiaobo.com/2018/06/30/Spring-MVC-%E5%8E%9F%E7%90%86%E6%8E%A2%E7%A7%98-%E5%AE%B9%E5%99%A8%E7%9A%84%E5%88%9B%E5%BB%BA%E8%BF%87%E7%A8%8B/" target="_blank" rel="noopener">Spring MVC 原理探秘 - 容器的创建过程</a>)</li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/Spring-MVC/"># Spring MVC</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/05/19/Spring-MVC：请求处理流程/">深入分析Spring MVC：请求处理流程</a>
+            
+            
+            <a class="next" rel="next" href="/2019/05/17/MyBatis插件机制/">MyBatis插件机制</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

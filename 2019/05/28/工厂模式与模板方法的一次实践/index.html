@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>工厂模式与模板方法的一次实践 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">工厂模式与模板方法的一次实践</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">May 28, 2019&nbsp;&nbsp;14:26:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/项目/">项目</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>最近做的一个项目是实现一个灰度发布的逻辑，具体来说就是当某个产品更新的时候，根据不同的用户决定是否对新版本可见。该功能本身是很容易实现的，但是考虑到可扩展性的问题，引入了Drools规则引擎，并且通过一些设计模式来进一步提高它的可扩展性，以应对之后可能不断发生变化的规则。</p>
+<h2 id="原始代码"><a href="#原始代码" class="headerlink" title="原始代码"></a>原始代码</h2><p>由于规则并不十分复杂，所以项目中将许多的校验与判断逻辑统一封装到了Fact对象中，而在.drl文件中仅仅是做一些初始化工作，例如这里的场景是给每个用户设置一个新版本可见的延迟天数，达到了这个天数才能获取新版本，那么在.drl中就是将用户与延迟天数的映射关系做初始化。因此，最开始只需要一个Fact就行了：<br><img src="http://img.hecenjie.cn/DelayDaysPatternReleaseFact.png" alt><br>在.drl文件中，初始化完成之后，仅仅需要调用这个Fact对象的<code>releaseCheck()</code>，然后就可以通过<code>isRelease()</code>方法决定是否发布新版本了。</p>
+<h2 id="可扩展性"><a href="#可扩展性" class="headerlink" title="可扩展性"></a>可扩展性</h2><p>由上面的简单分析可以看到，判断是否发布新版本的逻辑都封装在了<code>releaseCheck()</code>方法中，但这个方法中的许多步骤其实是冗余的，比如说参数校验、安全校验等等，如果每次增加新的Fact时都去写一模一样的重复代码，就显得十分不简洁且不利于维护了，因此，我们将该方法抽象出来，并且将其中最关键的判断逻辑<code>doReleaseCheck()</code>交由子类去实现，这样不同的Fact子类只需要实现各自的核心判断逻辑即可。此时的UML如下：<br><img src="http://img.hecenjie.cn/PatternReleaseFact.png" alt><br>除此之外，对于调用方来说，是不需要关心Fact对象的创建过程的，尤其是当参数比较复杂的情况下。这时候就可以通过工厂方法模式，将创建对象的具体过程交给工厂类来完成：<br><img src="http://img.hecenjie.cn/PatternReleaseFactFactory.png" alt><br>这样，对于调用方来说，只需要传入一个<code>UserInfo</code>对象即可，具体需要用到它的哪些属性以及属性的一些校验工作则交由工厂类来实现，调用方可以直接拿到想要的Fact对象。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>通过模板方法，可以在抽象父类中先定义好整个方法的框架，并且让不同的子类去实现其中的某些核心步骤，这些核心步骤在父类中是抽象的；而通过工厂方法，使得调用者不再需要关心创建对象的具体过程，将许多繁琐的工作解耦了出去，由工厂类来负责实现。</p>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/项目/"># 项目</a>
+                    
+                        <a href="/tags/工厂方法/"># 工厂方法</a>
+                    
+                        <a href="/tags/模板方法/"># 模板方法</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/05/28/Drools规则引擎原理简介/">Drools规则引擎原理简介</a>
+            
+            
+            <a class="next" rel="next" href="/2019/05/27/建索引的几大原则/">MySQL建索引的几大原则</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

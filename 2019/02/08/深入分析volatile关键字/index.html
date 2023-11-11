@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>深入分析volatile关键字 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">深入分析volatile关键字</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">February 8, 2019&nbsp;&nbsp;8:28:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/并发/">并发</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p><code>Synchronized</code>能够实现原子性和可见性，在Java内存模型中，<code>Synchronized</code>规定线程在加锁时，先清空工作内存，从主内存中拷贝最新变量的副本到工作内存，执行完代码后再刷新到主内存中，此时才能释放锁。</p>
+<p><code>volatile</code>是轻量级的<code>synchronized</code>，如果使用恰当的话，它会比<code>synchronized</code>的使用成本更低，因为它不会引起线程上下文的切换和调度。如果一个字段被声明成<code>volatile</code>，它将具有以下两个特性：</p>
+<ul>
+<li>可见性，即一个线程修改了某个变量的值，这新值对其他线程来说是立即可见的。</li>
+<li>禁止指令重排序。</li>
+</ul>
+<a id="more"></a>
+<h2 id="volatile的实现原理"><a href="#volatile的实现原理" class="headerlink" title="volatile的实现原理"></a>volatile的实现原理</h2><p>如果对声明了<code>volatile</code>的变量进行写操作，JVM就会向处理器发送一条Lock前缀的指令，将这个变量所在缓存行的数据写回到系统内存。为了保证各个处理器的缓存是一致的，就会实现缓存一致性协议，每个处理器通过嗅探在总线上传播的数据来检查自己缓存值是不是过期了，当处理器发现自己缓存行对应的内存地址被修改，就会将当前处理器的缓存行设置成无效状态，当处理器对这个数据进行修改操作的时候，会重新从系统内存中把数据读到处理器缓存里。</p>
+<p>简单来说就是Lock前缀指令会引起处理器缓存回写到内存，而一个处理器的缓存回写到内存会导致其它处理器的缓存无效。</p>
+<h2 id="volatile的内存语义"><a href="#volatile的内存语义" class="headerlink" title="volatile的内存语义"></a>volatile的内存语义</h2><ul>
+<li><code>volatile</code>写的内存语义：当写一个<code>volatile</code>变量时，JMM会把该线程对应的本地内存中的共享变量值刷新到主内存。</li>
+<li><code>volatile</code>读的内存语义：当读一个<code>volatile</code>变量时，JMM会把该线程对应的本地内存设置为无效。线程接下来将从主内存中读取共享变量。</li>
+</ul>
+<p>为了实现<code>volatile</code>内存语义，JMM会限制重排序。其重排序规则如下：</p>
+<ul>
+<li>当第二个操作是<code>volatile</code>写时，不管第一个操作是什么，都不能重排序。</li>
+<li>当第一个操作是<code>volatile</code>读时，不管第二个操作是什么，都不能重排序。</li>
+<li>当第一个操作是<code>volatile</code>写，第二个操作是<code>volatile</code>读时，都不能重排序。</li>
+</ul>
+<p><code>volatile</code>的底层实现，是通过插入内存屏障。但是对于编译器来说，发现一个最优布置来最小化插入内存屏障的总数几乎是不可能的，所以，JMM采用了保守策略，策略如下：</p>
+<ul>
+<li>在每个<code>volatile</code>写操作的前面插入一个<code>StoreStore</code>屏障。</li>
+<li>在每个<code>volatile</code>写操作的后面插入一个<code>StoreLoad</code>屏障。</li>
+<li>在每个<code>volatile</code>读操作的后面插入一个<code>LoadLoad</code>屏障。</li>
+<li>在每个<code>volatile</code>读操作的后面插入一个<code>LoadStore</code>屏障。</li>
+</ul>
+<p>原因如下：</p>
+<ul>
+<li><code>StoreStore</code>屏障：保证在<code>volatile</code>写之前，其前面的所有普通写操作，都已经刷新到主内存中。</li>
+<li><code>StoreLoad</code>屏障：避免<code>volatile</code>写，与后面可能有的<code>volatile</code>读/写操作重排序。</li>
+<li><code>LoadLoad</code>屏障：禁止处理器把上面的<code>volatile</code>读，与下面的普通读重排序。</li>
+<li><code>LoadStore</code>屏障：禁止处理器把上面的<code>volatile</code>读，与下面的普通写重排序。</li>
+</ul>
+<p>此策略可以保证在任意处理器平台，任意程序中都能得到正确的<code>volatile</code>内存语义，但其实在实际中，只要不会改变<code>volatile</code>的内存语义，编译器可以根据具体情况优化，省略不必要的屏障。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="http://ifeve.com/volatile/" target="_blank" rel="noopener">聊聊并发（一）深入分析Volatile的实现原理</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/并发/"># 并发</a>
+                    
+                        <a href="/tags/volatile/"># volatile</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/02/08/深入分析synchronized关键字/">深入分析synchronized关键字</a>
+            
+            
+            <a class="next" rel="next" href="/2019/02/07/支付宝对接流程/">支付宝的支付流程（当面付）</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

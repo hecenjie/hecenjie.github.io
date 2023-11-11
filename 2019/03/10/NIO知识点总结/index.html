@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>NIO知识点总结 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">NIO知识点总结</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">March 10, 2019&nbsp;&nbsp;20:55:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/NIO/">NIO</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>Java NIO是一个可以替代标准Java IO API的IO API，主要有以下三个核心组件：</p>
+<ul>
+<li>Channels</li>
+<li>Buffers</li>
+<li>Selectors</li>
+</ul>
+<p>NIO与IO的主要区别在于：</p>
+<ul>
+<li>IO是面向流的，NIO是面向缓冲区的。</li>
+<li>IO是阻塞的，NIO是非阻塞的。</li>
+<li>NIO有选择器，允许一个单独的线程来管理多个输入通道。</li>
+</ul>
+<a id="more"></a>
+<h1 id="Channel"><a href="#Channel" class="headerlink" title="Channel"></a>Channel</h1><p>Java NIO的通道类似流，主要区别在于：</p>
+<ul>
+<li>既可以从通道中读取数据，又可以写数据到通道。但流的读写通常是单向的。</li>
+<li>通道可以异步地读写。</li>
+<li>通道中的数据总是要先读到一个Buffer，或者总是要从一个Buffer中写入。</li>
+</ul>
+<p>NIO中有以下几个重要的通道实现。</p>
+<h2 id="FileChannel"><a href="#FileChannel" class="headerlink" title="FileChannel"></a>FileChannel</h2><p>FileChannel是一个连接到文件的通道。可以通过文件通道读写文件。</p>
+<p>注意：FileChannel无法设置为非阻塞模式，它总是运行在阻塞模式下。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//打开FileChannel</span></span><br><span class="line">RandomAccessFile aFile = <span class="keyword">new</span> RandomAccessFile(<span class="string">"data/nio-data.txt"</span>, <span class="string">"rw"</span>);</span><br><span class="line">FileChannel inChannel = aFile.getChannel();</span><br><span class="line"></span><br><span class="line"><span class="comment">//在FileChannel的某个特定位置进行数据的读/写操作</span></span><br><span class="line"><span class="keyword">long</span> pos = channel.position();</span><br><span class="line">channel.position(pos +<span class="number">123</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">//可以使用FileChannel.truncate()方法截取一个文件，指定长度后面的部分将被删除</span></span><br><span class="line">channel.truncate(<span class="number">1024</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">//出于性能方面的考虑，操作系统会将数据缓存在内存中，所以无法保证写入到FileChannel里的数据一定会即时写到磁盘上，而通过FileChannel.force()方法则可以将通道里尚未写入磁盘的数据强制写到磁盘上</span></span><br><span class="line">channel.force(<span class="keyword">true</span>);</span><br></pre></td></tr></table></figure>
+<h2 id="SocketChannel"><a href="#SocketChannel" class="headerlink" title="SocketChannel"></a>SocketChannel</h2><p>SocketChannel是一个连接到TCP网络套接字的通道。可以通过以下2种方式创建SocketChannel：</p>
+<ul>
+<li>打开一个SocketChannel并连接到互联网上的某台服务器。</li>
+<li>一个新连接到达ServerSocketChannel时，会创建一个SocketChannel。</li>
+</ul>
+<p>SocketChannel是可以设置为非阻塞模式的，设置之后，就可以在异步模式下调用<code>connect()</code>, <code>read()</code>和<code>write()</code>了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//打开并连接</span></span><br><span class="line">SocketChannel socketChannel = SocketChannel.open();</span><br><span class="line">socketChannel.connect(<span class="keyword">new</span> InetSocketAddress(<span class="string">"http://jenkov.com"</span>, <span class="number">80</span>));</span><br><span class="line"></span><br><span class="line"><span class="comment">//非阻塞模式可以调用finishConnect()的方法确定连接是否建立</span></span><br><span class="line">socketChannel.configureBlocking(<span class="keyword">false</span>);</span><br><span class="line">socketChannel.connect(<span class="keyword">new</span> InetSocketAddress(<span class="string">"http://jenkov.com"</span>, <span class="number">80</span>));</span><br><span class="line"><span class="keyword">while</span>(! socketChannel.finishConnect() )&#123;</span><br><span class="line">   <span class="comment">//wait, or do something else...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="ServerSocketChannel"><a href="#ServerSocketChannel" class="headerlink" title="ServerSocketChannel"></a>ServerSocketChannel</h2><p>ServerSocketChannel是一个可以监听新进来的TCP连接的通道。在打开了ServerSocketChannel之后，可以通过<code>accept()</code>方法监听新进来的连接，当<code>accept()</code>方法返回的时候，它返回一个包含新进来的连接的<code>SocketChannel</code>。因此，<code>accept()</code>方法会一直阻塞到有新连接到达。</p>
+<p>ServerSocketChannel也可以设置成非阻塞模式。在非阻塞模式下，<code>accept()</code>方法会立刻返回，如果还没有新进来的连接,返回的将是<code>null</code>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//打开通道并监听新进来的连接</span></span><br><span class="line">ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();</span><br><span class="line">serverSocketChannel.socket().bind(<span class="keyword">new</span> InetSocketAddress(<span class="number">9999</span>));</span><br><span class="line"><span class="keyword">while</span>(<span class="keyword">true</span>)&#123;</span><br><span class="line">    SocketChannel socketChannel = serverSocketChannel.accept();</span><br><span class="line">    <span class="comment">//do something with socketChannel...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="DatagramChannel"><a href="#DatagramChannel" class="headerlink" title="DatagramChannel"></a>DatagramChannel</h2><p>DatagramChannel是一个能收发UDP包的通道。因为UDP是无连接的网络协议，所以不能像其它通道那样读取和写入。它发送和接收的是数据包。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//打开DatagramChannel</span></span><br><span class="line">DatagramChannel channel = DatagramChannel.open();</span><br><span class="line">channel.socket().bind(<span class="keyword">new</span> InetSocketAddress(<span class="number">9999</span>));</span><br><span class="line"></span><br><span class="line"><span class="comment">//通过receive()方法从DatagramChannel接收数据到指定的Buffer，如果Buffer容不下收到的数据，多出的数据将被丢弃</span></span><br><span class="line">ByteBuffer buf = ByteBuffer.allocate(<span class="number">48</span>);</span><br><span class="line">buf.clear();</span><br><span class="line">channel.receive(buf);</span><br><span class="line"></span><br><span class="line"><span class="comment">//通过send()方法从DatagramChannel发送数据</span></span><br><span class="line">String newData = <span class="string">"New String to write to file..."</span> + System.currentTimeMillis();</span><br><span class="line">ByteBuffer buf = ByteBuffer.allocate(<span class="number">48</span>);</span><br><span class="line">buf.clear();</span><br><span class="line">buf.put(newData.getBytes());</span><br><span class="line">buf.flip();</span><br><span class="line"><span class="keyword">int</span> bytesSent = channel.send(buf, <span class="keyword">new</span> InetSocketAddress(<span class="string">"jenkov.com"</span>, <span class="number">80</span>));</span><br></pre></td></tr></table></figure>
+<h1 id="Buffer"><a href="#Buffer" class="headerlink" title="Buffer"></a>Buffer</h1><p>Buffer本质是一块可以写入数据，并可以从中读取数据的内存，用于和通道进行交互，过程如下：</p>
+<ul>
+<li>写入数据到Buffer</li>
+<li>调用<code>flip()</code>方法</li>
+<li>从Buffer中读取数据</li>
+<li>调用<code>clear()</code>方法或者<code>compact()</code>方法</li>
+</ul>
+<p>其中<code>flip()</code>方法是将Buffer从写模式切换到读模式，<code>clear()</code>方法会清空整个缓冲区，<code>compact()</code>方法只会清除已经读过的数据并将所有未读的数据拷贝到Buffer起始处。</p>
+<p>Buffer有三个属性：</p>
+<ul>
+<li>capacity</li>
+<li>position：当写数据到Buffer中时，position表示当前的位置；当从Buffer读取数据时，也是从当前位置开始读；将Buffer从写模式切换到读模式，position会被重置为0。</li>
+<li>limit：在写模式下，limit表示你最多能往Buffer里写多少数据，此时limit等于capacity；在读模式下，limit表示最多能读到多少数据，因此，当切换Buffer到读模式时，limit会被设置成写模式下的position值。</li>
+</ul>
+<p>Buffer有以下几种类型，它们代表了不同的数据类型：</p>
+<ul>
+<li>ByteBuffer</li>
+<li>MappedByteBuffer</li>
+<li>CharBuffer</li>
+<li>DoubleBuffer</li>
+<li>FloatBuffer</li>
+<li>IntBuffer</li>
+<li>LongBuffer</li>
+<li>ShortBuffer</li>
+</ul>
+<h2 id="Buffer的分配"><a href="#Buffer的分配" class="headerlink" title="Buffer的分配"></a>Buffer的分配</h2><p>要想获得一个Buffer对象首先要进行分配。每一个Buffer类都有一个allocate方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ByteBuffer buf = ByteBuffer.allocate(<span class="number">48</span>);</span><br></pre></td></tr></table></figure></p>
+<h2 id="向Buffer写数据"><a href="#向Buffer写数据" class="headerlink" title="向Buffer写数据"></a>向Buffer写数据</h2><p>写数据到Buffer有两种方式：</p>
+<ul>
+<li>从Channel写到Buffer。</li>
+<li>通过Buffer的<code>put()</code>方法写到Buffer里。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> bytesRead = inChannel.read(buf); <span class="comment">//read into buffer.</span></span><br><span class="line"></span><br><span class="line">buf.put(<span class="number">127</span>);</span><br></pre></td></tr></table></figure>
+<h2 id="从Buffer读数据"><a href="#从Buffer读数据" class="headerlink" title="从Buffer读数据"></a>从Buffer读数据</h2><p>从Buffer中读取数据有两种方式：</p>
+<ul>
+<li>从Buffer读取数据到Channel。</li>
+<li>使用get()方法从Buffer中读取数据。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> bytesWritten = inChannel.write(buf);</span><br><span class="line"></span><br><span class="line"><span class="keyword">byte</span> aByte = buf.get();</span><br></pre></td></tr></table></figure>
+<h2 id="rewind-方法"><a href="#rewind-方法" class="headerlink" title="rewind()方法"></a>rewind()方法</h2><p><code>rewind()</code>将position设回0，所以可以重读Buffer中的所有数据。limit保持不变，仍然表示能从Buffer中读取多少个元素。</p>
+<h1 id="Selector"><a href="#Selector" class="headerlink" title="Selector"></a>Selector</h1><p>Selector是NIO中能够检测一到多个通道，并能够知晓通道是否为诸如读写事件做好准备的组件。这样，一个单独的线程可以管理多个channel，从而管理多个网络连接。</p>
+<h2 id="创建并注册"><a href="#创建并注册" class="headerlink" title="创建并注册"></a>创建并注册</h2><p>与Selector一起使用时，Channel必须处于非阻塞模式下。这意味着不能将FileChannel与Selector一起使用，因为FileChannel不能切换到非阻塞模式。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Selector的创建</span></span><br><span class="line">Selector selector = Selector.open();</span><br><span class="line">   </span><br><span class="line">  <span class="comment">//向Selector注册通道</span></span><br><span class="line">  channel.configureBlocking(<span class="keyword">false</span>);</span><br><span class="line">SelectionKey key = channel.register(selector,</span><br><span class="line">  Selectionkey.OP_READ);</span><br></pre></td></tr></table></figure>
+<p>注意<code>register()</code>方法的第二个参数。这是一个interest集合，意思是在通过Selector监听Channel时对什么事件感兴趣。可以监听四种不同类型的事件，用SelectionKey的四个常量来表示:</p>
+<ul>
+<li><code>SelectionKey.OP_CONNECT</code>：某个channel成功连接到另一个服务器称为“连接就绪”</li>
+<li><code>SelectionKey.OP_ACCEPT</code>：一个server socket channel准备好接收新进入的连接称为“接收就绪”</li>
+<li><code>SelectionKey.OP_READ</code>：一个有数据可读的通道可以说是“读就绪”</li>
+<li><code>SelectionKey.OP_WRITE</code>：等待写数据的通道可以说是“写就绪”。</li>
+</ul>
+<p>如果对不止一种事件感兴趣，那么可以用“位或”操作符将常量连接起来，如<code>int interestSet = SelectionKey.OP_READ | SelectionKey.OP_WRITE;</code></p>
+<h2 id="SelectionKey"><a href="#SelectionKey" class="headerlink" title="SelectionKey"></a>SelectionKey</h2><p>当向Selector注册Channel时，<code>register()</code>法会返回一个SelectionKey对象，这个对象包含以下几个属性：</p>
+<ul>
+<li>terest集合</li>
+<li>ready集合</li>
+<li>Channel</li>
+<li>Selector</li>
+<li>附加的对象（可选）</li>
+</ul>
+<h3 id="interest集合"><a href="#interest集合" class="headerlink" title="interest集合"></a>interest集合</h3><p>可以用位与操作interest集合和给定的SelectionKey常量来确定某个事件是否在interest集合中。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> interestSet = selectionKey.interestOps();</span><br><span class="line"></span><br><span class="line"><span class="keyword">boolean</span> isInterestedInAccept  = (interestSet &amp; SelectionKey.OP_ACCEPT) == SelectionKey.OP_ACCEPT；</span><br><span class="line"><span class="keyword">boolean</span> isInterestedInConnect = interestSet &amp; SelectionKey.OP_CONNECT;</span><br><span class="line"><span class="keyword">boolean</span> isInterestedInRead    = interestSet &amp; SelectionKey.OP_READ;</span><br><span class="line"><span class="keyword">boolean</span> isInterestedInWrite   = interestSet &amp; SelectionKey.OP_WRITE;</span><br></pre></td></tr></table></figure>
+<h3 id="ready集合"><a href="#ready集合" class="headerlink" title="ready集合"></a>ready集合</h3><p>ready集合是通道已经准备就绪的操作的集合。可以用像检测interest集合那样的方法，来检测channel中什么事件或操作已经就绪，也可以通过如下的方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">selectionKey.isAcceptable();</span><br><span class="line">selectionKey.isConnectable();</span><br><span class="line">selectionKey.isReadable();</span><br><span class="line">selectionKey.isWritable();</span><br></pre></td></tr></table></figure></p>
+<h3 id="Channel-Selector"><a href="#Channel-Selector" class="headerlink" title="Channel Selector"></a>Channel Selector</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Channel  channel  = selectionKey.channel();</span><br><span class="line">Selector selector = selectionKey.selector();</span><br></pre></td></tr></table></figure>
+<h3 id="附加的对象"><a href="#附加的对象" class="headerlink" title="附加的对象"></a>附加的对象</h3><p>可以将一个对象或者更多信息附着到SelectionKey上，这样就能方便的识别某个给定的通道。使用方法如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">selectionKey.attach(theObject);</span><br><span class="line">Object attachedObj = selectionKey.attachment();</span><br></pre></td></tr></table></figure>
+<h2 id="选择通道"><a href="#选择通道" class="headerlink" title="选择通道"></a>选择通道</h2><p>一旦向Selector注册了一或多个通道，就可以调用<code>select()</code>方法选择就绪的通道，方法返回已经就绪的通道数目。<code>select()</code>阻塞到至少有一个通道在你注册的事件上就绪了，而<code>selectNow()</code>不会阻塞。</p>
+<p>一旦调用了<code>select()</code>方法，并且返回值表明有一个或更多个通道就绪了，就可以通过调用<code>selectedKeys()</code>方法返回就绪通道的集合：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Set selectedKeys = selector.selectedKeys();</span><br></pre></td></tr></table></figure></p>
+<p>之后就可以通过遍历这个集合来访问就绪的通道：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Set selectedKeys = selector.selectedKeys();</span><br><span class="line">Iterator keyIterator = selectedKeys.iterator();</span><br><span class="line"><span class="keyword">while</span>(keyIterator.hasNext()) &#123;</span><br><span class="line">    SelectionKey key = keyIterator.next();</span><br><span class="line">    <span class="keyword">if</span>(key.isAcceptable()) &#123;</span><br><span class="line">        <span class="comment">// a connection was accepted by a ServerSocketChannel.</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (key.isConnectable()) &#123;</span><br><span class="line">        <span class="comment">// a connection was established with a remote server.</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (key.isReadable()) &#123;</span><br><span class="line">        <span class="comment">// a channel is ready for reading</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (key.isWritable()) &#123;</span><br><span class="line">        <span class="comment">// a channel is ready for writing</span></span><br><span class="line">    &#125;</span><br><span class="line">    keyIterator.remove();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>注意每次迭代末尾的<code>keyIterator.remove()</code>调用。Selector不会自己从集合中移除SelectionKey实例，必须在处理完通道时自己移除。下次该通道变成就绪时，Selector会再次将其放入集合中。</p>
+<h2 id="关闭"><a href="#关闭" class="headerlink" title="关闭"></a>关闭</h2><p>用完Selector后调用其<code>close()</code>方法会关闭该Selector，且使注册到该Selector上的所有SelectionKey实例无效，但通道本身并不会关闭。</p>
+<h1 id="Scatter-Gather"><a href="#Scatter-Gather" class="headerlink" title="Scatter/Gather"></a>Scatter/Gather</h1><p>Java NIO支持scatter/gather，scatter是指数据从一个channel读取到多个buffer中，而gather则是指数据从多个buffer写入到同一个channel。scatter/gather经常用于需要将传输的数据分开处理的场合，例如传输一个由消息头和消息体组成的消息，你可能会将消息体和消息头分散到不同的buffer中，这样可以方便的处理消息头和消息体。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">ByteBuffer header = ByteBuffer.allocate(<span class="number">128</span>);</span><br><span class="line">ByteBuffer body   = ByteBuffer.allocate(<span class="number">1024</span>);</span><br><span class="line">ByteBuffer[] bufferArray = &#123; header, body &#125;;</span><br><span class="line">channel.read(bufferArray);</span><br><span class="line"></span><br><span class="line">ByteBuffer header = ByteBuffer.allocate(<span class="number">128</span>);</span><br><span class="line">ByteBuffer body   = ByteBuffer.allocate(<span class="number">1024</span>);</span><br><span class="line">ByteBuffer[] bufferArray = &#123; header, body &#125;;</span><br><span class="line">channel.write(bufferArray);</span><br></pre></td></tr></table></figure>
+<p>注意，Scattering Reads在移动下一个buffer前，必须填满当前的buffer，这意味着它不适用于动态消息，而Gathering Writes只有position和limit之间的数据才会被写入，因此能较好的处理动态消息。</p>
+<h1 id="通道之间的数据传输"><a href="#通道之间的数据传输" class="headerlink" title="通道之间的数据传输"></a>通道之间的数据传输</h1><p>如果两个通道中有一个是FileChannel，那么可以直接将数据从一个通道传输到另外一个通道。</p>
+<h2 id="transferFrom"><a href="#transferFrom" class="headerlink" title="transferFrom()"></a>transferFrom()</h2><p><code>transferFrom()</code>方法可以将数据从源channel传输到FileChannel中：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">RandomAccessFile fromFile = <span class="keyword">new</span> RandomAccessFile(<span class="string">"fromFile.txt"</span>, <span class="string">"rw"</span>);</span><br><span class="line">FileChannel fromChannel = fromFile.getChannel();</span><br><span class="line"></span><br><span class="line">RandomAccessFile toFile = <span class="keyword">new</span> RandomAccessFile(<span class="string">"toFile.txt"</span>, <span class="string">"rw"</span>);</span><br><span class="line">FileChannel toChannel = toFile.getChannel();</span><br><span class="line"></span><br><span class="line"><span class="keyword">long</span> position = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">long</span> count = fromChannel.size();</span><br><span class="line"></span><br><span class="line">toChannel.transferFrom(position, count, fromChannel);</span><br></pre></td></tr></table></figure></p>
+<h2 id="transferTo"><a href="#transferTo" class="headerlink" title="transferTo()"></a>transferTo()</h2><p><code>transferTo()</code>方法将数据从FileChannel传输到其他的channel中。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">RandomAccessFile fromFile = <span class="keyword">new</span> RandomAccessFile(<span class="string">"fromFile.txt"</span>, <span class="string">"rw"</span>);</span><br><span class="line">FileChannel      fromChannel = fromFile.getChannel();</span><br><span class="line"></span><br><span class="line">RandomAccessFile toFile = <span class="keyword">new</span> RandomAccessFile(<span class="string">"toFile.txt"</span>, <span class="string">"rw"</span>);</span><br><span class="line">FileChannel      toChannel = toFile.getChannel();</span><br><span class="line"></span><br><span class="line"><span class="keyword">long</span> position = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">long</span> count = fromChannel.size();</span><br><span class="line"></span><br><span class="line">fromChannel.transferTo(position, count, toChannel);</span><br></pre></td></tr></table></figure>
+<h1 id="Path"><a href="#Path" class="headerlink" title="Path"></a>Path</h1><p>Path接口表示的是一个与平台无关的路径，既可以是绝对路径也可以是相对路径，文件和目录都用Path表示。</p>
+<h2 id="创建Path"><a href="#创建Path" class="headerlink" title="创建Path"></a>创建Path</h2><p>可以使用Paths工具类的工厂方法创建一个Path对象：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Path path = Paths.get(<span class="string">"C:\\DATA\\test.txt"</span>);</span><br><span class="line"></span><br><span class="line">Path projects = Paths.get(<span class="string">"d:\\data"</span>, <span class="string">"projects"</span>);</span><br><span class="line"></span><br><span class="line">Path currentDir = Paths.get(<span class="string">"."</span>);</span><br><span class="line">Path parentDir = Paths.get(<span class="string">".."</span>);</span><br></pre></td></tr></table></figure>
+<h2 id="normalize"><a href="#normalize" class="headerlink" title="normalize()"></a>normalize()</h2><p><code>normalize()</code>方法可以标准化路径，它会处理路径中的相对路径，去除<code>.</code> <code>..</code>：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Path path = Paths.get(<span class="string">"c:/Z_DATA/./test.txt"</span>);</span><br><span class="line">System.out.println(<span class="string">"path = "</span> + path);</span><br><span class="line"></span><br><span class="line">path = path.normalize();</span><br><span class="line">System.out.println(<span class="string">"path = "</span> + path);</span><br><span class="line"></span><br><span class="line"><span class="comment">//输出</span></span><br><span class="line">path = c:\Z_DATA\.\test.txt</span><br><span class="line">path = c:\Z_DATA\test.txt</span><br></pre></td></tr></table></figure></p>
+<h1 id="Files"><a href="#Files" class="headerlink" title="Files"></a>Files</h1><p>Files工具类封装提供了一些操作文件系统中文件的工具方法，往往和和Path一起使用。</p>
+<h2 id="exists"><a href="#exists" class="headerlink" title="exists()"></a>exists()</h2><p><code>exists()</code>可以判断一个Path在文件系统中是否存在。</p>
+<h2 id="createDirctory"><a href="#createDirctory" class="headerlink" title="createDirctory()"></a>createDirctory()</h2><p>在调用创建方法前最好先检查是否存在，如果已经存在会抛出<code>FileAlreadyExistsException</code>异常。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Path newDir = Paths.get(<span class="string">"c:/Z_DATA/newDir"</span>);</span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">if</span>(!Files.exists(newDir)) &#123;</span><br><span class="line">        Files.createDirectory(newDir);</span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">    e.printStackTrace();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="copy"><a href="#copy" class="headerlink" title="copy()"></a>copy()</h2><p><code>copy()</code>只能复制到不存在的路径，如果复制的目标文件已存在则会抛出异常。强制覆盖已存在文件也是可以的，需要增加相应参数：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Path sourcePath = Paths.get(classPath,<span class="string">"nio-data.txt"</span>);</span><br><span class="line">Path targetPath = Paths.get(classPath,<span class="string">"nio-data-copy.txt"</span>);</span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING); <span class="comment">// 复制并覆盖已有文件</span></span><br><span class="line">&#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">    e.printStackTrace();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="move"><a href="#move" class="headerlink" title="move()"></a>move()</h2><p>Java NIO Files类同样提供了移动文件的方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Path sourcePath = Paths.get(classPath,<span class="string">"nio-data.txt"</span>);</span><br><span class="line">Path targetPath = Paths.get(classPath,<span class="string">"nio-data-copy.txt"</span>);</span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING); <span class="comment">// 移动并覆盖已有文件</span></span><br><span class="line">&#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">    e.printStackTrace();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="delete"><a href="#delete" class="headerlink" title="delete()"></a>delete()</h2><p>删除文件或目录</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Files.delete(targetPath);</span><br></pre></td></tr></table></figure>
+<p>如果删除的文件或目录不存在会抛出<code>IOException</code>异常。</p>
+<h1 id="AsynchronousFileChannel"><a href="#AsynchronousFileChannel" class="headerlink" title="AsynchronousFileChannel"></a>AsynchronousFileChannel</h1><p>使用AsynchronousFileChannel可以实现异步地读取和写入文件数据。</p>
+<h2 id="创建"><a href="#创建" class="headerlink" title="创建"></a>创建</h2><p>我们可以使用AsynchronousFileChannel提供的静态方法<code>open()</code>创建它。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Path path = Paths.get(<span class="string">"data/test.xml"</span>);</span><br><span class="line">AsynchronousFileChannel fileChannel =</span><br><span class="line">    AsynchronousFileChannel.open(path, StandardOpenOption.READ);</span><br></pre></td></tr></table></figure>
+<h2 id="读取数据"><a href="#读取数据" class="headerlink" title="读取数据"></a>读取数据</h2><p>AsynchronousFileChannel提供了两种读取数据的方式，都是调用它本身的<code>read()</code>方法。</p>
+<h3 id="使用Futrue读取数据"><a href="#使用Futrue读取数据" class="headerlink" title="使用Futrue读取数据"></a>使用Futrue读取数据</h3><p>第一种方式是调用AsynchronousFileChannel的<code>read()</code>方法，该方法返回一个<code>Future</code>类型的对象。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">AsynchronousFileChannel fileChannel = </span><br><span class="line">    AsynchronousFileChannel.open(path, StandardOpenOption.READ);</span><br><span class="line"></span><br><span class="line">ByteBuffer buffer = ByteBuffer.allocate(<span class="number">1024</span>);</span><br><span class="line"><span class="keyword">long</span> position = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">Future&lt;Integer&gt; operation = fileChannel.read(buffer, position);</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span>(!operation.isDone());</span><br><span class="line"></span><br><span class="line">buffer.flip();</span><br><span class="line"><span class="keyword">byte</span>[] data = <span class="keyword">new</span> <span class="keyword">byte</span>[buffer.limit()];</span><br><span class="line">buffer.get(data);</span><br><span class="line">System.out.println(<span class="keyword">new</span> String(data));</span><br><span class="line">buffer.clear();</span><br></pre></td></tr></table></figure>
+<p>以上代码<code>read()</code>方法会立即返回，即使整个读的过程还没有完全结束。我们可以通过<code>Future.isDone()</code>来检查读取是否完成。</p>
+<h3 id="使用CompletionHandler读取数据"><a href="#使用CompletionHandler读取数据" class="headerlink" title="使用CompletionHandler读取数据"></a>使用CompletionHandler读取数据</h3><p>第二种读取数据的方式是调用AsynchronousFileChannel的另一个<code>read()</code>方法，该方法需要一个<code>CompletionHandler</code>作为参数。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">fileChannel.read(buffer, position, buffer, <span class="keyword">new</span> CompletionHandler&lt;Integer, ByteBuffer&gt;() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">completed</span><span class="params">(Integer result, ByteBuffer attachment)</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"result = "</span> + result);</span><br><span class="line"></span><br><span class="line">        attachment.flip();</span><br><span class="line">        <span class="keyword">byte</span>[] data = <span class="keyword">new</span> <span class="keyword">byte</span>[attachment.limit()];</span><br><span class="line">        attachment.get(data);</span><br><span class="line">        System.out.println(<span class="keyword">new</span> String(data));</span><br><span class="line">        attachment.clear();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">failed</span><span class="params">(Throwable exc, ByteBuffer attachment)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>一旦读取操作完成，<code>CompletionHandler</code>的<code>complete()</code>方法将会被调用。它的第一个参数是个<code>Integer</code>类型，表示读取的字节数。第二个参数<code>attachment</code>是<code>ByteBuffer</code>类型的，用来存储读取的数据(<code>ByteBuffer</code>也可以换成其他合适的对象方便数据写入)。它其实就是由<code>read()</code>方法的第三个参数。读取失败的时候，<code>CompletionHandler</code>的<code>failed()</code>方法会被调用。</p>
+<h2 id="写入数据"><a href="#写入数据" class="headerlink" title="写入数据"></a>写入数据</h2><p>就像读取一样，我们同样有两种方式向AsynchronousFileChannel写入数据。</p>
+<h3 id="使用Future读取数据"><a href="#使用Future读取数据" class="headerlink" title="使用Future读取数据"></a>使用Future读取数据</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">Path path = Paths.get(<span class="string">"data/test-write.txt"</span>);</span><br><span class="line">AsynchronousFileChannel fileChannel = </span><br><span class="line">    AsynchronousFileChannel.open(path, StandardOpenOption.WRITE);</span><br><span class="line"></span><br><span class="line">ByteBuffer buffer = ByteBuffer.allocate(<span class="number">1024</span>);</span><br><span class="line"><span class="keyword">long</span> position = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">buffer.put(<span class="string">"test data"</span>.getBytes());</span><br><span class="line">buffer.flip();</span><br><span class="line"></span><br><span class="line">Future&lt;Integer&gt; operation = fileChannel.write(buffer, position);</span><br><span class="line">buffer.clear();</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span>(!operation.isDone());</span><br><span class="line"></span><br><span class="line">System.out.println(<span class="string">"Write done"</span>);</span><br></pre></td></tr></table></figure>
+<p>注意，写入目标文件要提前创建好，如果它不存在的话，<code>write()</code>方法会抛出一个 <code>NoSuchFileException</code>。</p>
+<h3 id="使用CompletionHandler写入数据"><a href="#使用CompletionHandler写入数据" class="headerlink" title="使用CompletionHandler写入数据"></a>使用CompletionHandler写入数据</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">Path path = Paths.get(<span class="string">"data/test-write.txt"</span>);</span><br><span class="line"><span class="keyword">if</span>(!Files.exists(path))&#123;</span><br><span class="line">    Files.createFile(path);</span><br><span class="line">&#125;</span><br><span class="line">AsynchronousFileChannel fileChannel = </span><br><span class="line">    AsynchronousFileChannel.open(path, StandardOpenOption.WRITE);</span><br><span class="line"></span><br><span class="line">ByteBuffer buffer = ByteBuffer.allocate(<span class="number">1024</span>);</span><br><span class="line"><span class="keyword">long</span> position = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">buffer.put(<span class="string">"test data"</span>.getBytes());</span><br><span class="line">buffer.flip();</span><br><span class="line"></span><br><span class="line">fileChannel.write(buffer, position, buffer, <span class="keyword">new</span> CompletionHandler&lt;Integer, ByteBuffer&gt;() &#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">completed</span><span class="params">(Integer result, ByteBuffer attachment)</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"bytes written: "</span> + result);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">failed</span><span class="params">(Throwable exc, ByteBuffer attachment)</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"Write failed"</span>);</span><br><span class="line">        exc.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>当写入程序完成时，CompletionHandler的<code>completed()</code>方法将会被调用，相反的如果写入失败则会调用<code>failed()</code>方法。</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ul>
+<li><a href="http://ifeve.com/java-nio-all/" target="_blank" rel="noopener">Java NIO 系列教程</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/NIO/"># NIO</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/03/27/Linux-五种IO模型/">Linux五种IO模型</a>
+            
+            
+            <a class="next" rel="next" href="/2019/02/17/HTTPS的过程与原理/">HTTPS的过程与原理</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>访问一个网页的全过程 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">访问一个网页的全过程</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">February 13, 2019&nbsp;&nbsp;18:09:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/计算机网络/">计算机网络</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <ol>
+<li><p>客户端用户从浏览器输入<code>www.google.com</code>网站网址后回车，系统会查询本地hosts文件及DNS缓存信息，查找是否存在网址对应的IP解析记录。如果有就直接获取到IP地址，然后访问网站，一般第一次请求时，DNS缓存是没有解析记录的。</p>
+</li>
+<li><p>如果hosts与DNS缓存都没有解析记录时，系统会把浏览器的解析请求交给客户端本地设置的DNS服务器地址解析，如果本地DNS服务器的本地缓存有对应的解析记录，就会直接返回IP地址。</p>
+</li>
+<li><p>如果本地DNS服务器没有对应的解析记录，则根据本地DNS服务器的设置（是否设置转发器）进行查询，如果未用转发模式，本地DNS就把请求发至13台根DNS，根DNS服务器收到请求后会判断这个域名(<code>.com</code>)是谁来授权管理，并会返回一个负责该顶级域名服务器的一个IP。本地DNS服务器收到IP信息后，将会联系负责<code>.com</code>域的这台服务器。这台负责<code>.com</code>域的服务器收到请求后，如果自己无法解析，它就会找一个管理<code>.com</code>域的下一级DNS服务器地址(<code>google.com</code>)给本地DNS服务器。当本地DNS服务器收到这个地址后，就会找<code>google.com</code>域服务器，重复上面的动作，进行查询，直至找到<code>www.google.com</code>主机。</p>
+</li>
+<li><p>如果用的是转发模式，此DNS服务器就会把请求转发至上一级DNS服务器，由上一级服务器进行解析，上一级服务器如果不能解析，或找根DNS服务器或把请求转发至上上级，以此循环。不管是本地DNS服务器还是转发，还是根DNS，最后都是把结果返回给本地DNS服务器，由此DNS服务器再返回给客户机。</p>
+</li>
+</ol>
+<blockquote>
+<p>如果配置了CDN，则DNS系统最终会将域名的解析权交给CNAME指向的CDN专用DNS服务器，CDN的DNS服务器将CDN的全局负载均衡设备IP地址返回给本地DNS，本地DNS再向CDN的全局负载均衡设备发起内容URL访问请求，CDN全局负载均衡设备根据用户IP地址，以及用户请求的内容URL，选择一台用户所属区域的区域负载均衡设备，告诉用户向这台设备发起请求。区域负载均衡设备会为用户选择一台合适的缓存服务器提供服务，选择的依据包括：根据用户IP地址，判断哪一台服务器距用户最近；根据用户所请求的URL中携带的内容名称，判断哪一台服务器上有用户所需内容；查询各个服务器当前的负载情况，判断哪一台服务器尚有服务能力。基于以上这些条件的综合分析之后，区域负载均衡设备会向全局负载均衡设备返回一台缓存服务器的IP地址，全局负载均衡设备再把缓存服务器的IP地址返回给本地DNS，此时就可以通过IP向缓存服务器发起请求了，当缓存服务器中不存在请求结果时才会从源站中获取。</p>
+</blockquote>
+<ol start="5">
+<li>通过DNS解析拿到了IP之后，就可以通过IP向服务器发送http请求了，因为http工作在应用层，tcp工作在传输层，所以发生http请求之前，还会进行tcp的三次握手建立连接。</li>
+<li><p>在连接成功建立后，开始向web服务器发送请求，当浏览器向Web服务器发出请求时，它向服务器传递了一个数据块，也就是请求报文，请求报文由<code>请求方法 URI 协议/版本</code>、<code>请求头</code>、<code>请求正文</code>三部分组成。</p>
+</li>
+<li><p>请求报文由应用层向下，依次经过传输层、网络层、数据链路层与物理层。应用层的任务是通过应用进程间的交互来完成特定网络应用，有HTTP、DNS等众多协议，传输层的主要任务则是负责向两台主机进程之间的通信提供通用的数据传输服务，包括TCP与UDP两种协议，TCP是面向连接的、可靠的的数据传输服务，而UDP提供无连接的、不可靠的数据传输服务，TCP主要提供完整性服务，UDP主要提供及时性服务；传输层是为主机中的进程提供数据传输服务，而网络层则是为不同主机提供数据传输服务，这一层有IP协议，由于主机之间可以有很多链路，数据链路层则是为同一链路的主机提供数据传输服务。最终物理层考虑怎样在传输媒体上传输数据比特流。数据通过以太网电缆传送到服务器，服务器拿到数据包后同样再由数据链路层、网络层、传输层依次向上解析，应用层最终收到请求内容。</p>
+</li>
+<li><p>服务器收到请求报文之后，就会将响应报文返回给客户端，响应报文由<code>协议/版本 状态码 描述</code>、<code>响应头</code>、<code>响应正文</code>三部分组成。这里的状态码分为1XX（信息类）、2XX（成功类）、3XX（重定向类）、4XX（客户端错误）、5XX（服务器错误）。</p>
+</li>
+<li><p>当浏览器加载一个完整的页面时，还需要与服务器断开连接，这个过程就是tcp的四次挥手。</p>
+</li>
+<li><p>在HTTP协议的初始版本中，每进行一次HTTP通信就要断开一次TCP连接。因此，每次的请求都会造成无谓的TCP连接建立与断开，增加通信量的开销。为了解决这个问题，HTTP/1.1使用长连接减少开销，只要任意一端没有明确提出断开连接，就保持TCP连接状态，当客户端再次访问这个服务器上的网页时，会继续使用这一条已经建立的连接。</p>
+</li>
+</ol>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/02/16/InnoDB和MyISAM的区别/">InnoDB和MyISAM的区别</a>
+            
+            
+            <a class="next" rel="next" href="/2019/02/12/多线程断点续传下载器/">多线程断点续传下载器</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

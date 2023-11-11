@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>常用查找算法之B/B+树 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">常用查找算法之B/B+树</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">January 28, 2019&nbsp;&nbsp;22:24:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/算法/">算法</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>从算法逻辑上讲二叉查找树的查找和插入操作效率都已经很高，但是在实际应用中由于我们不能将整个索引表加载到内存，只能逐一加载每个磁盘页，这里的磁盘页就对应着索引树的节点。因此我们要将原本“瘦高”的树结构变得“矮胖”，从而减少磁盘IO的次数。</p>
+<a id="more"></a>
+<h1 id="B-树"><a href="#B-树" class="headerlink" title="B- 树"></a>B- 树</h1><p>B-树是一种多路平衡查找树，是对2-3树的一个扩展。一个m阶的B树（m的大小取决于磁盘页的大小）具有如下几个特征：</p>
+<ul>
+<li>根结点至少有两个子女。</li>
+<li>每个中间节点都包含k-1个元素和k个孩子，其中 k ∈ [m/2, m]</li>
+<li>每一个叶子节点都包含k-1个元素，其中 k ∈ [m/2, m]</li>
+<li>所有的叶子结点都位于同一层。</li>
+<li>每个节点中的元素从小到大排列，节点当中k-1个元素正好是k个孩子包含的元素的值域分划。</li>
+</ul>
+<p><img src="http://img.hecenjie.cn/b2ec3daa41094928b25aeb5b0480e291_th.jpg" alt="b-"></p>
+<h2 id="查找"><a href="#查找" class="headerlink" title="查找"></a>查找</h2><p>下图以一个3阶B-树为例，第一次磁盘IO并在内存中和9比较：<br><img src="http://img.hecenjie.cn/0a49e74202364d509a90717425288e95_th.jpg" alt="1"></p>
+<p>第二次磁盘IO并在内存中和2、6比较：<br><img src="http://img.hecenjie.cn/4e2a2b6b20d843cc8c0063afede51bff_th.jpg" alt="2"></p>
+<p>第三次磁盘IO并在内存中和3、5比较：<br><img src="http://img.hecenjie.cn/6eb86cf70e424349ba0a566ab09ba211_th.jpg" alt="3"></p>
+<p>单从比较次数来说B树相比二叉查找树并不占优势，但由于节点中存储着多个元素，因此它的磁盘IO次数比二叉查找树少很多，而内存中的比较耗时几乎可以忽略，因此查找性能也就比二叉查找树更好。</p>
+<h2 id="插入"><a href="#插入" class="headerlink" title="插入"></a>插入</h2><p>以插入元素4为例，自顶向下查找4的节点位置，发现4应当插入到节点元素3，5之间，而由于此B-树是3阶的，每个节点最多能有2个元素，因此该节点无法再增加，而其父节点也含有两个元素，根节点只有一个元素。</p>
+<p><img src="http://img.hecenjie.cn/d353c6f2ad7f4659b453fd0c93ff6862_th.jpg" alt="insert"></p>
+<p>于是拆分节点3，5与节点2，6，让根节点9升级为两元素节点4，9。节点6独立为根节点的第二个孩子。</p>
+<p><img src="http://img.hecenjie.cn/00e049f863f14faabdcf6c1eff1b99a7_th.jpg" alt="insert"></p>
+<h2 id="删除"><a href="#删除" class="headerlink" title="删除"></a>删除</h2><p>以删除元素11为例，先自顶向下查找元素11的节点位置。</p>
+<p><img src="http://img.hecenjie.cn/17efb36118204a729b5c59a15408d6bc_th.jpg" alt="delete"></p>
+<p>删除11后，节点12只有一个孩子，不符合B树规范。因此找出12,13,15三个节点的中位数13，取代节点12，而节点12自身下移成为第一个孩子（左旋操作）。</p>
+<p><img src="http://img.hecenjie.cn/b958ba741db84961af96df894f390de3_th.jpg" alt="delete"><br><img src="http://img.hecenjie.cn/120fd5b162654644b24fbc7aa68ba6ee_th.jpg" alt="delete"></p>
+<h1 id="B-树-1"><a href="#B-树-1" class="headerlink" title="B+ 树"></a>B+ 树</h1><p>B+树是B-树的一个变体，有着比B-树更高的查询性能。一个m阶的B+树（m的大小取决于磁盘页的大小）具有如下几个特征：</p>
+<ul>
+<li>有k个子树的中间节点包含有k个元素（B-树中是k-1个元素），每个元素不保存数据，只用来索引，所有数据都保存在叶子节点。</li>
+<li>所有的叶子结点中包含了全部元素的信息，及指向含这些元素记录的指针，且叶子结点本身依关键字的大小自小而大顺序链接。</li>
+<li>所有的中间节点元素都同时存在于子节点，在子节点元素中是最大（或最小）元素。</li>
+</ul>
+<p><img src="http://img.hecenjie.cn/358025867be14bb99bf8806b98e774d9_th.png" alt="b+"></p>
+<p>注意，根节点的最大元素（上图中是15）等同于整个B+树的最大元素；由于父节点的元素都出现在子节点，因此所有叶子节点包含了全量元素信息，并且每一个叶子节点都带有指向下一个节点的指针，形成了一个有序链表。</p>
+<h2 id="查找-1"><a href="#查找-1" class="headerlink" title="查找"></a>查找</h2><p>在B-树中，无论中间节点还是叶子节点都带有卫星数据（索引元素所指向的数据记录），而Ｂ+树中间节点没有卫星数据，只有索引，这就意味着同样大小的磁盘页可以容纳更多节点元素，在相同的数据量下，B+树更加“矮胖”，IO操作更少。 </p>
+<p><img src="http://img.hecenjie.cn/36efa69561dc4043a17d550133e13a6c_th.png" alt="b-"><br><img src="http://img.hecenjie.cn/d8ae1b14e9bf4b1890146eb803ee9795_th.png" alt="b+"></p>
+<p>下图以查找元素3为例，第一次磁盘IO：</p>
+<p><img src="http://img.hecenjie.cn/6808907785b84be09d8c6b7c8acb5d2a_th.png" alt="1"></p>
+<p>第二次磁盘IO：</p>
+<p><img src="http://img.hecenjie.cn/0193eedf3a5b47129340e2b6c654ef72_th.png" alt="2"></p>
+<p>第三次磁盘IO：</p>
+<p><img src="http://img.hecenjie.cn/68553d369a304d798116f432247c6e3f_th.png" alt="3"></p>
+<p>B+树除了比B树更加“矮胖”这一点不同外，由于B+树的查询必须最终查找到叶子节点，而B-树中无论匹配元素处于中间节点还是叶子节点只要找到匹配元素即可，所以B+树的查找性能是稳定的，而B-树的查找性能不稳定（最好情况是只查根节点，最坏情况是查到叶子节点）。</p>
+<h2 id="范围查找"><a href="#范围查找" class="headerlink" title="范围查找"></a>范围查找</h2><p>由于B+树的叶子节点构成了一条有序链表，因此B+树的范围查找比B-树简单得多，下面以查询范围为3到11的元素为例。</p>
+<p>自顶向下，查找到范围的下限3：</p>
+<p><img src="http://img.hecenjie.cn/c0ef4d22cedf43cc8d21732d27f9be3e_th.png" alt="1"></p>
+<p>通过链表指针，遍历到元素6、8：</p>
+<p><img src="http://img.hecenjie.cn/005777d81ab247c281f8a1b4bc6b3461_th.png" alt="2"></p>
+<p>通过链表指针，遍历到元素9、11，遍历结束：</p>
+<p><img src="http://img.hecenjie.cn/e972e47b2c554f789e02e90b26a8b543_th.png" alt="3"></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>为了减少磁盘IO的次数，必须降低树的深度，将“瘦高”的树变得“矮胖，使得磁盘页可以容纳更多节点元素，因此出现了B-树。B+树是B-树的变体，相比B-树有以下优势：</p>
+<ul>
+<li>单一节点存储更多的元素，使得查询的IO次数更少。</li>
+<li>所有查询都要查找到叶子节点，查询性能稳定。</li>
+<li>所有叶子节点形成有序链表，便于范围查询。</li>
+</ul>
+<p>除了B-树和B+树，平时还会听到有<code>B*</code>树的概念，同样<code>B*</code>树是B+树的一个变体，相比B+树的不同之处如下：</p>
+<ul>
+<li>将结点的最低利用率从1/2提高到2/3。</li>
+<li>在B+树基础上，为非叶子结点也增加链表指针：B+树当一个结点满时，会分配一个新的结点，并将原结点中1/2的数据复制到新结点，最后在父结点中增加新结点的指针；<code>B*</code>树当一个结点满时，如果它的下一个兄弟结点未满，那么将一部分数据移到兄弟结点中，而如果兄弟也满了，则在原结点与兄弟结点之间增加新结点，并各复制1/3的数据到新结点，最后在父结点增加新结点的指针。</li>
+</ul>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ul>
+<li><a href="https://www.sohu.com/a/154640931_478315" target="_blank" rel="noopener">漫画：什么是B-树？</a></li>
+<li><a href="https://www.sohu.com/a/156886901_479559" target="_blank" rel="noopener">漫画：什么是B+树？</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/算法/"># 算法</a>
+                    
+                        <a href="/tags/B树/"># B树</a>
+                    
+                        <a href="/tags/查找/"># 查找</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/01/28/树的前中后层序遍历（递归与非递归方式）/">树的前中后层序遍历（递归与非递归方式）</a>
+            
+            
+            <a class="next" rel="next" href="/2019/01/28/常用查找算法之红黑树/">常用查找算法之红黑树</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

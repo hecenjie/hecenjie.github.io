@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>Redis持久化：AOF与RDB | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Redis持久化：AOF与RDB</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">March 30, 2019&nbsp;&nbsp;11:30:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/Redis/">Redis</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="Redis持久化"><a href="#Redis持久化" class="headerlink" title="Redis持久化"></a>Redis持久化</h2><p>Redis是内存数据库，数据都是存储在内存中，为了避免进程退出导致数据的永久丢失，需要定期将Redis中的数据以某种形式(数据或命令)从内存保存到硬盘，当下次Redis重启时，利用持久化文件实现数据恢复。</p>
+<p>Redis持久化分为RDB持久化和AOF持久化：前者将当前数据保存到硬盘，后者则是将每次执行的写命令保存到硬盘（类似于MySQL的binlog）。</p>
+<h2 id="RDB"><a href="#RDB" class="headerlink" title="RDB"></a>RDB</h2><p>RDB持久化是将当前进程中的数据生成快照保存到硬盘，保存的文件后缀是rdb，当Redis重新启动时，可以读取快照文件恢复数据。RDB持久化分为手动触发和自动触发两种方式：</p>
+<h3 id="手动触发"><a href="#手动触发" class="headerlink" title="手动触发"></a>手动触发</h3><p>手动触发可以使用<code>save</code>命令和<code>bgsave</code>命令，都可以生成rdb文件。它们的区别在于<code>save</code>命令会阻塞Redis服务器进程，直到RDB文件创建完毕为止，在Redis服务器阻塞期间，服务器不能处理任何命令请求；而<code>bgsave</code>命令会创建一个子进程，由子进程来负责创建RDB文件，父进程（即Redis主进程）则继续处理请求，整个过程中只有<code>fork</code>子进程时会阻塞服务器。</p>
+<h3 id="自动触发"><a href="#自动触发" class="headerlink" title="自动触发"></a>自动触发</h3><p>自动触发最常见的情况是在配置文件中通过<code>save m n</code>，指定当m秒内发生n次变化时，会触发<code>bgsave</code>。例如默认配置文件中有以下三行：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">save 900 1</span><br><span class="line">save 300 10</span><br><span class="line">save 60 10000</span><br></pre></td></tr></table></figure></p>
+<p>只要上面三行任意一条满足时，就会执行<code>bgsave</code>。除此之外，在主从复制的场景下，如果从节点执行全量复制操作，则主节点会执行<code>bgsave</code>命令，并将rdb文件发送给从节点。执行<code>shutdown</code>命令时，也会自动执行rdb持久化。</p>
+<h3 id="启动时加载"><a href="#启动时加载" class="headerlink" title="启动时加载"></a>启动时加载</h3><p>RDB文件的载入工作是在服务器启动时自动执行的，并没有专门的命令。但是由于AOF的优先级更高，因此当AOF开启时，Redis会优先载入AOF文件来恢复数据；只有当AOF关闭时，才会在Redis服务器启动时检测RDB文件，并自动载入。服务器载入RDB文件期间处于阻塞状态，直到载入完成为止。</p>
+<h2 id="AOF"><a href="#AOF" class="headerlink" title="AOF"></a>AOF</h2><p>RDB持久化是将进程数据写入文件，而AOF持久化则是将Redis执行的每次写命令记录到单独的日志文件中（有点像MySQL的binlog），当Redis重启时再次执行AOF文件中的命令来恢复数据。与RDB相比，AOF的实时性更好，因此已成为主流的持久化方案。</p>
+<h3 id="三种策略"><a href="#三种策略" class="headerlink" title="三种策略"></a>三种策略</h3><p>为了提高文件写入效率，在现代操作系统中，当用户将数据写入文件时（<code>write</code>命令），操作系统通常会将数据暂存到一个内存缓冲区里，当缓冲区被填满或超过了指定时限，才真正将缓冲区的数据写入到硬盘里。这样的操作虽然提高了效率，但如果系统崩溃，内存缓冲区中的数据将会丢失。因此可以设置同步选项，强制操作系统什么时候将缓冲区中的数据写入到硬盘中（<code>fsync</code>命令），Redis提供了以下三种同步策略：</p>
+<ul>
+<li>always：每个写命令都同步</li>
+<li>everysec：每秒同步一次</li>
+<li>no：让操作系统来决定何时同步</li>
+</ul>
+<p>always会严重降低服务器的性能，而no的不可控性太强，因此Redis使用everysec作为默认配置，但在系统崩溃时可能会丢失一秒的数据。</p>
+<h3 id="文件重写"><a href="#文件重写" class="headerlink" title="文件重写"></a>文件重写</h3><p>随着Redis服务器执行的写命令越来越多，AOF文件也会越来越大，过大的AOF文件不仅会影响服务器的正常运行，也会导致数据恢复需要的时间过长。文件重写是指定期重写AOF文件，减小AOF文件的体积。需要注意的是，AOF重写是把Redis进程内的数据转化为写命令，同步到新的AOF文件，而不会对旧的AOF文件进行任何读取、写入操作。</p>
+<p>文件重写主要是针对以下一些语句：</p>
+<ul>
+<li>过期的数据（如<code>expire</code>），可以不用再写入文件。</li>
+<li>多次<code>INCR</code>命令可以合并为一个<code>SET</code>命令。</li>
+<li>无效的命令不再写入文件，比如有些数据被删除了。</li>
+</ul>
+<h3 id="手动触发-1"><a href="#手动触发-1" class="headerlink" title="手动触发"></a>手动触发</h3><p>可以直接调用<code>bgrewriteaof</code>命令重写文件，该命令的执行与<code>bgsave</code>有些类似，都是<code>fork</code>子进程进行具体的工作，且都只有在<code>fork</code>时阻塞。</p>
+<h3 id="自动触发-1"><a href="#自动触发-1" class="headerlink" title="自动触发"></a>自动触发</h3><p>默认配置是当AOF文件大小是上次重写后大小的一倍（<code>auto-aof-rewrite-min-size</code>）且文件大于64M时触发（<code>auto-aof-rewrite-percentage</code>）。</p>
+<h3 id="具体流程"><a href="#具体流程" class="headerlink" title="具体流程"></a>具体流程</h3><ol>
+<li>父进程执行<code>fork</code>操作创建子进程，这个过程中父进程是阻塞的。</li>
+<li>子进程创建后，Redis的所有写命令依然写入AOF缓冲区，并根据设置策略同步到硬盘，保证原有AOF机制的正确。</li>
+<li>由于<code>fork</code>操作使用写时复制技术，子进程只能共享<code>fork</code>操作时的内存数据。由于父进程依然在响应命令，因此Redis使用AOF重写缓冲区（图中的aof_rewrite_buf）保存这部分数据，防止新AOF文件生成期间丢失这部分数据。也就是说，bgrewriteaof执行期间，Redis的写命令同时追加到aof_buf和aof_rewirte_buf两个缓冲区。</li>
+<li>子进程根据内存快照，按照命令合并规则写入到新的AOF文件。</li>
+<li>子进程写完新的AOF文件后，向父进程发信号，父进程把AOF重写缓冲区的数据写入到新的AOF文件，这样就保证了新AOF文件所保存的数据库状态和服务器当前状态一致。</li>
+<li>使用新的AOF文件替换老文件，完成AOF重写。</li>
+</ol>
+<p><img src="http://blog.default.nanwulife.com/1174710-20180605092001589-1724580361.png" alt></p>
+<h2 id="RDB与AOF对比"><a href="#RDB与AOF对比" class="headerlink" title="RDB与AOF对比"></a>RDB与AOF对比</h2><ul>
+<li>RDB持久化：RDB文件紧凑，体积小，恢复速度比AOF快很多，但数据的实时性较低。</li>
+<li>AOF持久化：实时性较高，但是文件大，并且恢复速度较慢，且对性能有一定影响。</li>
+</ul>
+<h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><h3 id="fork阻塞：CPU的阻塞"><a href="#fork阻塞：CPU的阻塞" class="headerlink" title="fork阻塞：CPU的阻塞"></a>fork阻塞：CPU的阻塞</h3><p>在Redis中，无论是RDB持久化的<code>bgsave</code>，还是AOF重写的<code>bgrewriteaof</code>，都需要<code>fork</code>出子进程来进行操作，而在操作系统<code>fork</code>的实现中，基本都采用了写时复制技术，即在父/子进程试图修改数据空间之前，父子进程实际上共享数据空间，但是当父/子进程的任何一个试图修改数据空间时，操作系统会为修改的那一部分（内存的一页）制作一个副本。</p>
+<p>也就是说，虽然<code>fork</code>时子进程不会复制父进程的数据空间，但是会复制内存页表，如果Redis内存过大，会导致fork操作时复制内存页表耗时过多，而Redis主进程在进行<code>fork</code>时是完全阻塞的，意味着无法响应客户端的请求，造成请求延迟过大。</p>
+<p>为了防止该问题的发生，我们需要控制Redis单机内存的大小，并且适当放宽AOF重写的触发条件，尽量在写入较少的时间段完成重写。</p>
+<h3 id="AOF追加阻塞：硬盘的阻塞"><a href="#AOF追加阻塞：硬盘的阻塞" class="headerlink" title="AOF追加阻塞：硬盘的阻塞"></a>AOF追加阻塞：硬盘的阻塞</h3><p>AOF持久化过程中，通过<code>fsync</code>命令每秒一次将缓冲区的数据写入磁盘中，但在硬盘负载过高时，<code>fsync</code>操作可能会超过1s，当继续向缓冲区内写入数据时，磁盘负载会越来越大，如果此时Redis进程异常退出，丢失的数据也有可能远超1s。</p>
+<p>为此，Redis的处理策略是这样的：主线程每次进行AOF会对比距离上次<code>fsync</code>成功的时间，如果距上次不到2s，主线程直接返回；如果超过2s，则主线程阻塞直到<code>fsync</code>同步完成。因此，如果系统硬盘负载过大导致<code>fsync</code>速度太慢，会导致Redis主线程的阻塞。这里还要注意的是，如果使用everysec策略，AOF最多可能丢失2s的数据，而不是1s。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>《Redis开发与运维》</li>
+<li><a href="https://www.cnblogs.com/kismetv/p/9137897.html" target="_blank" rel="noopener">深入学习Redis（2）：持久化</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/Redis/"># Redis</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/03/30/dis主从复制/">Redis主从复制</a>
+            
+            
+            <a class="next" rel="next" href="/2019/03/27/Linux-五种IO模型/">Linux五种IO模型</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

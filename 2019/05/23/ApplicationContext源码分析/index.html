@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>ApplicationContext体系分析 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">ApplicationContext体系分析</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">May 23, 2019&nbsp;&nbsp;19:15:41</a>
+                        </span>
+                    
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p><code>ApplicationContext</code>实现了除基本容器外的多个接口，提供了比<code>BeanFactory</code>更为丰富的功能，比如说自动识别<code>BeanPostProcessor</code>以及其它特殊类型Bean、容器启动时自动加载Bean、国际化支持、容器内事件发布等。因此，我们在实际应用中一般会使用<code>ApplicationContext</code>而不是<code>BeanFactory</code>。</p>
+<h2 id="继承体系"><a href="#继承体系" class="headerlink" title="继承体系"></a>继承体系</h2><p><img src="http://img.hecenjie.cn/72307-b0c809e1cc035cdb.jpg" alt></p>
+<p>从上图可以看出，<code>ApplicationContext</code>继承了<code>BeanFactory</code>，因此拥有<code>BeanFactory</code>的全部功能，实际上，它是将容器的功能委派给<code>DefaultListableBeanFactory</code>来实现。除此之外，<code>ApplicationContext</code>还继承了<code>ResourceLoader</code>、<code>EnvironmentCable</code>、<code>ApplicationEventPublisher</code>、<code>MessageSource</code>等接口，提供了十分丰富的功能。</p>
+<h2 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h2><p>创建一个常用的<code>ApplicationContext</code>：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ClassPathXmlApplicationContext context = <span class="keyword">new</span> ClassPathXmlApplicationContext(<span class="string">"classpath:application.xml"</span>);</span><br></pre></td></tr></table></figure></p>
+<p><code>ClassPathXmlApplicationContext</code>的构造函数在设置完配置文件的位置后，紧接着调用<code>refresh()</code>方法，这个方法是整个<code>ApplicationContext</code>体系的核心，是在<code>AbstractApplicationContext</code>中实现的，并且是个典型的模板方法，也就是说其中的一些步骤是交由具体子类来实现的。以下是这个方法的代码：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">refresh</span><span class="params">()</span> <span class="keyword">throws</span> BeansException, IllegalStateException </span>&#123;</span><br><span class="line">	<span class="keyword">synchronized</span> (<span class="keyword">this</span>.startupShutdownMonitor) &#123;</span><br><span class="line">		<span class="comment">// 1. 准备刷新时的上下文环境</span></span><br><span class="line">		prepareRefresh();</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 2. 刷新并初始化 BeanFactory</span></span><br><span class="line">		ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 3. 配置 BeanFactory 中的一些其它信息</span></span><br><span class="line">		prepareBeanFactory(beanFactory);</span><br><span class="line"></span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">			<span class="comment">// 4. 提供子类覆盖的额外处理，即子类处理自定义的 BeanFactoryPostProcess</span></span><br><span class="line">			postProcessBeanFactory(beanFactory);</span><br><span class="line"></span><br><span class="line">			<span class="comment">// 5. 调用各种 BeanFactoryPostProcessor</span></span><br><span class="line">			invokeBeanFactoryPostProcessors(beanFactory);</span><br><span class="line"></span><br><span class="line">			<span class="comment">// 6. 注册 BeanPostProcessor 到 BeanFactory 中去</span></span><br><span class="line">			registerBeanPostProcessors(beanFactory);</span><br><span class="line"></span><br><span class="line">			<span class="comment">// 7. 初始化上下文中的资源文件，如国际化文件的处理等</span></span><br><span class="line">			initMessageSource();</span><br><span class="line"></span><br><span class="line">			<span class="comment">// 8. 初始化上下文事件广播器</span></span><br><span class="line">			initApplicationEventMulticaster();</span><br><span class="line"></span><br><span class="line">			<span class="comment">// 9. 初始化其它特殊 Bean</span></span><br><span class="line">			onRefresh();</span><br><span class="line"></span><br><span class="line">			<span class="comment">// 10. 检查 listener 类型的 Bean 并注册</span></span><br><span class="line">			registerListeners();</span><br><span class="line"></span><br><span class="line">			<span class="comment">// 11. 实例化所有非懒加载的单例 Bean</span></span><br><span class="line">			finishBeanFactoryInitialization(beanFactory);</span><br><span class="line"></span><br><span class="line">			<span class="comment">// 12. 发布相应的事件</span></span><br><span class="line">			finishRefresh();</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">catch</span> (BeansException ex) &#123;</span><br><span class="line">			<span class="comment">// ...</span></span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">finally</span> &#123;</span><br><span class="line">			<span class="comment">// Reset common introspection caches in Spring's core, since we</span></span><br><span class="line">			<span class="comment">// might not ever need metadata for singleton beans anymore...</span></span><br><span class="line">			resetCommonCaches();</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="obtainFreshBeanFactory"><a href="#obtainFreshBeanFactory" class="headerlink" title="obtainFreshBeanFactory"></a>obtainFreshBeanFactory</h3><p><code>obtainFreshBeanFactory()</code>方法核心是内部调用<code>refreshBeanFactory()</code>方法并将容器内部的<code>ConfigurableListableBeanFactory</code>返回，从这也看到了<code>ApplicationContext</code>和<code>BeanFactory</code>的关系：<code>ApplicationContext</code>内部包含一个<code>BeanFactory</code>，<code>ApplicationContext</code>所有关于<code>BeanFactory</code>的功能将委派给此<code>BeanFactory</code>处理。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">refreshBeanFactory</span><span class="params">()</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">   <span class="comment">// 清理之前的BeanFactory</span></span><br><span class="line">   <span class="keyword">if</span> (hasBeanFactory()) &#123;</span><br><span class="line">      destroyBeans();</span><br><span class="line">      closeBeanFactory();</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="comment">// createBeanFactory方法直接新建一个DefaultListableBeanFactory，也就是说内部使用的是DefaultListableBeanFactory实例</span></span><br><span class="line">      DefaultListableBeanFactory beanFactory = createBeanFactory();</span><br><span class="line">      beanFactory.setSerializationId(getId());</span><br><span class="line">      <span class="comment">// 自定义此上下文使用的内部bean工厂</span></span><br><span class="line">      customizeBeanFactory(beanFactory);</span><br><span class="line">      <span class="comment">// 将BeanDefinition加载到给定的bean工厂中，通常通过委托给一个或多个BeanDefinitionReader来实现</span></span><br><span class="line">      <span class="comment">// 子类实现的方法，此处调用的是AbstractXmlApplicationContext的方法</span></span><br><span class="line">      loadBeanDefinitions(beanFactory);</span><br><span class="line">      <span class="keyword">synchronized</span> (<span class="keyword">this</span>.beanFactoryMonitor) &#123;</span><br><span class="line">         <span class="keyword">this</span>.beanFactory = beanFactory;</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">catch</span> (IOException ex) &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> ApplicationContextException(...);</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>也就是说这一步是构建<code>ApplicationContext</code>内部的<code>BeanFactory</code>，以及根据配置将<code>BeanDefinition</code>加载到<code>BeanFactory</code>中（此时并没有实例化Bean）。</p>
+<h3 id="prepareBeanFactory"><a href="#prepareBeanFactory" class="headerlink" title="prepareBeanFactory"></a>prepareBeanFactory</h3><p>配置内部<code>BeanFactory</code>的一些基础参数，比如<code>ClassLoader</code>等等。</p>
+<h3 id="postProcessBeanFactory"><a href="#postProcessBeanFactory" class="headerlink" title="postProcessBeanFactory"></a>postProcessBeanFactory</h3><p>对<code>BeanFactory</code>预处理，<code>ClassPathXmlApplicationContext</code>未重写，<code>WebXmlApplicationContext</code>有重写，这里不展开。</p>
+<h3 id="invokeBeanFactoryPostProcessors"><a href="#invokeBeanFactoryPostProcessors" class="headerlink" title="invokeBeanFactoryPostProcessors"></a>invokeBeanFactoryPostProcessors</h3><p>在任何Bean的实例化之前，实例化并调用所有已注册的<code>BeanFactoryPostProcessor</code>Bean，如果实现了<code>PriorityOrdered</code>或者<code>Ordered</code>接口则按顺序调用。此时允许<code>BeanFactoryPostProcessor</code>在实例化<code>BeanDefinition</code>之前对当前的配置数据进行修改。</p>
+<h3 id="registerBeanPostProcessors"><a href="#registerBeanPostProcessors" class="headerlink" title="registerBeanPostProcessors"></a>registerBeanPostProcessors</h3><p>将当前所有的<code>BeanPostProcessor</code>注册到<code>BeanFactory</code>中去，同样也是按照<code>PriorityOrdered</code>或者<code>Ordered</code>的顺序。这也是<code>ApplicationContext</code>与<code>BeanFactory</code>的一个不同，<code>BeanFactory</code>必须自己手动的调用<code>addBeanPostProcessor()</code>方法。</p>
+<h3 id="initMessageSource"><a href="#initMessageSource" class="headerlink" title="initMessageSource"></a>initMessageSource</h3><p>初始化<code>MessageSource</code>，如果没有定义则使用<code>DelegatingMessageSource</code>，实际是委派给父类的。</p>
+<h3 id="initApplicationEventMulticaster"><a href="#initApplicationEventMulticaster" class="headerlink" title="initApplicationEventMulticaster"></a>initApplicationEventMulticaster</h3><p>初始化<code>ApplicationEventMulticaster</code>，如果没有定义则使用<code>SimpleApplicationEventMulticaster</code>。</p>
+<h3 id="onRefresh"><a href="#onRefresh" class="headerlink" title="onRefresh"></a>onRefresh</h3><p>模板方法，交给子类来实现，一般是用于在实例化单例Bean之前调用特定Bean的初始化。</p>
+<h3 id="registerListeners"><a href="#registerListeners" class="headerlink" title="registerListeners"></a>registerListeners</h3><p>将所有<code>ApplicationListener</code>注册到<code>ApplicationEventMulticaster</code>中，然后将<code>earlyApplicationEvents</code>中定义的事件进行广播。</p>
+<h3 id="finishBeanFactoryInitialization"><a href="#finishBeanFactoryInitialization" class="headerlink" title="finishBeanFactoryInitialization"></a>finishBeanFactoryInitialization</h3><p>实例化所有剩余的非懒加载的单例Bean，就是遍历所有的<code>beanName</code>，然后挨个调用<code>getBean(beanName)</code>。</p>
+<h3 id="finishRefresh"><a href="#finishRefresh" class="headerlink" title="finishRefresh"></a>finishRefresh</h3><p>完成此上下文的刷新，调用<code>LifecycleProcessor</code>的<code>onRefresh()</code>方法并发布<code>ContextRefreshedEvent</code>。主要是对于有生命周期的Bean，按照分组，调用其<code>start()</code>方法。</p>
+<h2 id="ApplicationContext使用"><a href="#ApplicationContext使用" class="headerlink" title="ApplicationContext使用"></a>ApplicationContext使用</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// beanFactory</span></span><br><span class="line">UserService userService = context.getBean(<span class="string">"userService"</span>, UserService<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 事件</span></span><br><span class="line">context.addApplicationListener(<span class="keyword">new</span> WalkListener());</span><br><span class="line">context.publishEvent(<span class="keyword">new</span> WalkEvent(<span class="keyword">new</span> User(<span class="string">"Jerry"</span>)));</span><br><span class="line">context.publishEvent(<span class="keyword">new</span> WalkEvent(<span class="keyword">new</span> User(<span class="string">"Peter"</span>)));</span><br><span class="line"></span><br><span class="line"><span class="comment">// locale</span></span><br><span class="line">context.getMessage(<span class="string">"menu.edit"</span>, <span class="keyword">null</span>, <span class="string">"Edit"</span>, Locale.US);</span><br><span class="line"><span class="comment">// ...</span></span><br></pre></td></tr></table></figure>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://www.jianshu.com/p/d75faa3ddce3" target="_blank" rel="noopener">Spring IOC ApplicationContext 源码分析</a></li>
+<li><a href>Spring ApplicationContext源码分析</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/05/24/破坏双亲委派模型/">破坏双亲委派模型</a>
+            
+            
+            <a class="next" rel="next" href="/2019/05/21/Simple-IoC开发日志：getBean/">Simple IoC开发日志：加载Bean</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

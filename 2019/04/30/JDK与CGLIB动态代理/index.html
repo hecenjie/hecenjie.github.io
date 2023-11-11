@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>JDK与CGLIB动态代理 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">JDK与CGLIB动态代理</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">April 30, 2019&nbsp;&nbsp;17:19:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/Java/">Java</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>前段时间看了Spring AOP的源码，其底层就是通过JDK与CGLIB动态代理实现的，因此在这里对两种代理方式进行实践和总结。</p>
+<h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><p>首先创建一个代理创建器<code>ProxyCreator</code>接口，我们将分别实现<code>JdkProxyCreator</code>与<code>CglibProxyCreator</code>，通过实现<code>getProxy()</code>方法返回一个代理对象：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">ProxyCreator</span> </span>&#123;</span><br><span class="line">    <span class="function">Object <span class="title">getProxy</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>创建一个<code>UserService</code>接口，提供登陆<code>login()</code>和退出<code>logout()</code>两个方法，并创建一个它的实现类<code>UserServiceImpl</code>：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">UserService</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">login</span><span class="params">(<span class="keyword">int</span> userId)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">logout</span><span class="params">(<span class="keyword">int</span> userId)</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">UserServiceImpl</span> <span class="keyword">implements</span> <span class="title">UserService</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">login</span><span class="params">(<span class="keyword">int</span> userId)</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"用户"</span> + userId + <span class="string">"登陆成功"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">logout</span><span class="params">(<span class="keyword">int</span> userId)</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"用户"</span> + userId + <span class="string">"退出成功"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>接下来，我们将分为JDK与CGLIB这两种动态代理方式，为上面的登陆与退出两个方法前后打印日志。</p>
+<h2 id="JDK动态代理"><a href="#JDK动态代理" class="headerlink" title="JDK动态代理"></a>JDK动态代理</h2><p>首先，创建一个<code>JdkProxyCreator</code>并实现<code>ProxyCreator</code>和<code>InvocationHandler</code>接口：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JdkProxyCreator</span> <span class="keyword">implements</span> <span class="title">ProxyCreator</span>, <span class="title">InvocationHandler</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> Object target;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">JdkProxyCreator</span><span class="params">(Object target)</span> </span>&#123;</span><br><span class="line">        Class&lt;?&gt;[] interfaces = target.getClass().getInterfaces();</span><br><span class="line">        <span class="keyword">if</span>(interfaces.length == <span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"目标对象必须实现接口"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">this</span>.target = target;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">getProxy</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        Class&lt;?&gt; clazz = target.getClass();</span><br><span class="line">        <span class="comment">// 该类本身实现了 InvocationHandler 接口，所以将自身作为参数传入</span></span><br><span class="line">        <span class="keyword">return</span> Proxy.newProxyInstance(clazz.getClassLoader(), clazz.getInterfaces(), <span class="keyword">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">invoke</span><span class="params">(Object proxy, Method method, Object[] args)</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(<span class="string">"login"</span>.equals(method.getName()))&#123;</span><br><span class="line">            System.out.println(<span class="string">"登陆前日志打印..."</span>);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span>(<span class="string">"logout"</span>.equals(method.getName()))&#123;</span><br><span class="line">            System.out.println(<span class="string">"退出前日志打印..."</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Object res = method.invoke(target, args); <span class="comment">// 调用目标方法</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span>(<span class="string">"login"</span>.equals(method.getName()))&#123;</span><br><span class="line">            System.out.println(<span class="string">"登陆后日志打印..."</span>);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span>(<span class="string">"logout"</span>.equals(method.getName()))&#123;</span><br><span class="line">            System.out.println(<span class="string">"退出后日志打印..."</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>可以看出，创建代理对象的核心其实就是这一行代码：<code>Proxy.newProxyInstance(clazz.getClassLoader(), clazz.getInterfaces(), this);</code>，其中第一个参数是目标对象的类加载器，第二个参数是目标对象实现的接口，第三个参数则是一个<code>InvocationHandler</code>，因为该类已经实现了这个接口，且打印日志的逻辑都封装在了该接口的<code>invoke</code>方法中了，所以直接传入<code>this</code>即可。</p>
+<p>测试代码：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JdkProxyTest</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        ProxyCreator proxyCreator = <span class="keyword">new</span> JdkProxyCreator(<span class="keyword">new</span> UserServiceImpl());</span><br><span class="line">        UserService userServiceProxy = (UserService) proxyCreator.getProxy();</span><br><span class="line">        System.out.println(<span class="string">"代理对象的类型："</span> + userServiceProxy.getClass());</span><br><span class="line">        userServiceProxy.login(<span class="number">1</span>);</span><br><span class="line">        userServiceProxy.logout(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>控制台输出：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">代理对象的类型：<span class="class"><span class="keyword">class</span> <span class="title">com</span>.<span class="title">sun</span>.<span class="title">proxy</span>.$<span class="title">Proxy0</span></span></span><br><span class="line"><span class="class">登陆前日志打印...</span></span><br><span class="line"><span class="class">用户1登陆成功</span></span><br><span class="line"><span class="class">登陆后日志打印...</span></span><br><span class="line"><span class="class">退出前日志打印...</span></span><br><span class="line"><span class="class">用户1退出成功</span></span><br><span class="line"><span class="class">退出后日志打印...</span></span><br></pre></td></tr></table></figure></p>
+<h2 id="CGLIB动态代理"><a href="#CGLIB动态代理" class="headerlink" title="CGLIB动态代理"></a>CGLIB动态代理</h2><p>CGLIB是一款优秀的Java字节码生成框架，它可以生成并操纵Java字节码。因此，CGLIB的动态代理其实就是使用字节码技术为目标类创建子类，并且在子类中拦截父类方法的调用，并且顺势织入横切逻辑。</p>
+<p>首先，在pom.xml中引入CGLIB的依赖：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependencies&gt;</span><br><span class="line">    &lt;!-- https://mvnrepository.com/artifact/cglib/cglib --&gt;</span><br><span class="line">    &lt;dependency&gt;</span><br><span class="line">        &lt;groupId&gt;cglib&lt;/groupId&gt;</span><br><span class="line">        &lt;artifactId&gt;cglib&lt;/artifactId&gt;</span><br><span class="line">        &lt;version&gt;2.2.2&lt;/version&gt;</span><br><span class="line">    &lt;/dependency&gt;</span><br><span class="line">&lt;/dependencies&gt;</span><br></pre></td></tr></table></figure></p>
+<p>然后创建一个<code>MethodInterceptor</code>接口的实现类，将打印日志的操作封装在<code>intercept()</code>方法中：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">UserMethodInterceptor</span> <span class="keyword">implements</span> <span class="title">MethodInterceptor</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">intercept</span><span class="params">(Object o, Method method, Object[] objects, MethodProxy methodProxy)</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(<span class="string">"login"</span>.equals(method.getName()))&#123;</span><br><span class="line">            System.out.println(<span class="string">"登陆前日志打印..."</span>);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span>(<span class="string">"logout"</span>.equals(method.getName()))&#123;</span><br><span class="line">            System.out.println(<span class="string">"退出前日志打印..."</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Object res = methodProxy.invokeSuper(o, objects);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span>(<span class="string">"login"</span>.equals(method.getName()))&#123;</span><br><span class="line">            System.out.println(<span class="string">"登陆后日志打印..."</span>);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span>(<span class="string">"logout"</span>.equals(method.getName()))&#123;</span><br><span class="line">            System.out.println(<span class="string">"退出后日志打印..."</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>其中，<code>Object res = methodProxy.invokeSuper(o, objects);</code>这一行将会调用父类的实现，也就是目标对象的原始方法。这里要注意的是一定不要写成了<code>method.invoke(o, objects);</code>，否则会造成死循环。</p>
+<p>接着，创建一个<code>CglibProxyCreator</code>实现<code>ProxyCreator</code>接口：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">CglibProxyCreator</span> <span class="keyword">implements</span> <span class="title">ProxyCreator</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> Object target;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> MethodInterceptor methodInterceptor;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">CglibProxyCreator</span><span class="params">(Object target, MethodInterceptor methodInterceptor)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.target = target;</span><br><span class="line">        <span class="keyword">this</span>.methodInterceptor = methodInterceptor;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">getProxy</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        Enhancer enhancer = <span class="keyword">new</span> Enhancer();</span><br><span class="line">        enhancer.setSuperclass(target.getClass());</span><br><span class="line">        enhancer.setCallback(methodInterceptor);</span><br><span class="line">        <span class="keyword">return</span> enhancer.create();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>不同于JDK动态代理使用<code>Proxy.newProxyInstance(clazz.getClassLoader(), clazz.getInterfaces(), this);</code>的方式，这里创建了一个<code>Enhancer</code>对象，并且设置了目标对象的类作为父类，还设置了之前的方法拦截器<code>UserMethodInterceptor</code>（其实这里也可以让该类本身实现<code>MethodInterceptor</code>接口），最后通过<code>enhancer.create()</code>方法返回代理对象。</p>
+<p>测试代码：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">CglibProxyTest</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        ProxyCreator proxyCreator = <span class="keyword">new</span> CglibProxyCreator(<span class="keyword">new</span> UserServiceImpl(), <span class="keyword">new</span> UserMethodInterceptor());</span><br><span class="line">        UserService userServiceProxy = (UserService) proxyCreator.getProxy();</span><br><span class="line">        System.out.println(<span class="string">"代理对象的类型："</span> + userServiceProxy.getClass());</span><br><span class="line">        userServiceProxy.login(<span class="number">2</span>);</span><br><span class="line">        userServiceProxy.logout(<span class="number">2</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>控制台输出：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">代理对象的类型：class cn.hecenjie.UserServiceImpl$$EnhancerByCGLIB$$76be9bea</span><br><span class="line">登陆前日志打印...</span><br><span class="line">用户2登陆成功</span><br><span class="line">登陆后日志打印...</span><br><span class="line">退出前日志打印...</span><br><span class="line">用户2退出成功</span><br><span class="line">退出后日志打印...</span><br></pre></td></tr></table></figure></p>
+<p>从上面的输出可以看出，代理对象其实是目标对象的一个子类。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>JDK代理要求目标对象有实现接口，而CGLIB则不需要。从性能上来说，CGLIB创建的动态代理对象比JDK创建的动态代理对象的性能更高，但是CGLIB创建代理对象时所花费的时间却比JDK多得多。所以对于单例的对象，因为无需频繁创建对象，用CGLIB合适，反之使用JDK方式要更为合适一些。</p>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/动态代理/"># 动态代理</a>
+                    
+                        <a href="/tags/CGLIB/"># CGLIB</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/04/30/Java异常机制/">Java异常机制总结</a>
+            
+            
+            <a class="next" rel="next" href="/2019/04/30/Spring-AOP源码笔记/">Spring AOP源码笔记</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

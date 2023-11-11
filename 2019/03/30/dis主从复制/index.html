@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>Redis主从复制 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Redis主从复制</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">March 30, 2019&nbsp;&nbsp;16:06:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/Redis/">Redis</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>主从复制是指将主节点（master）的数据复制到从节点（slave）中，数据的复制是单向的，只能由主节点到从节点。</p>
+<h2 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h2><p>主从复制过程大体可以分为3个阶段：连接建立阶段、数据同步阶段、命令传播阶段。</p>
+<h3 id="连接建立阶段"><a href="#连接建立阶段" class="headerlink" title="连接建立阶段"></a>连接建立阶段</h3><p>主从复制的开启，完全是在从节点发起的（通过<code>slaveof</code>命令），不需要我们在主节点做任何事情。需要注意的是，<code>slaveof</code>是异步命令，从节点完成主节点ip和port的保存后，向发送<code>slaveof</code>命令的客户端直接返回OK，实际的复制操作在这之后才开始进行。</p>
+<h3 id="数据同步阶段"><a href="#数据同步阶段" class="headerlink" title="数据同步阶段"></a>数据同步阶段</h3><p>主从节点之间的连接建立以后，便可以开始进行数据同步。数据同步阶段是主从复制最核心的阶段，由从节点向主节点发送<code>psync</code>命令开始同步，并且根据主从节点当前状态的不同，可以分为全量复制和部分复制。</p>
+<p><img src="http://blog.default.nanwulife.com/psync.jpg" alt></p>
+<h4 id="全量复制"><a href="#全量复制" class="headerlink" title="全量复制"></a>全量复制</h4><p>全量复制用于初次复制或其他无法进行部分复制的情况，将主节点中的所有数据都发送给从节点，是一个非常重型的操作。执行过程如下：</p>
+<ul>
+<li>主节点收到全量复制的命令后，执行<code>bgsave</code>，在后台生成RDB文件，并使用一个缓冲区（称为复制缓冲区）记录从现在开始执行的所有写命令。</li>
+<li>主节点的<code>bgsave</code>执行完成后，将RDB文件发送给从节点，从节点首先清除自己的旧数据，然后载入接收的RDB文件，将数据库状态更新至主节点执行<code>bgsave</code>时的数据库状态。</li>
+<li>主节点将复制缓冲区中的所有写命令发送给从节点，从节点执行这些写命令，将数据库状态更新至主节点的最新状态。</li>
+<li>如果从节点开启了AOF，则会触发<code>bgrewriteaof</code>的执行，从而保证AOF文件更新至主节点的最新状态。</li>
+</ul>
+<h4 id="部分复制"><a href="#部分复制" class="headerlink" title="部分复制"></a>部分复制</h4><p>复制偏移量：主节点和从节点分别维护一个复制偏移量（offset），代表的是主节点向从节点传递的字节数。主节点每次向从节点传播N个字节数据时，主节点的offset增加N；从节点每次收到主节点传来的N个字节数据时，从节点的offset增加N。offset用于判断主从节点的数据库状态是否一致：如果二者offset相同，则一致；如果offset不同，则不一致，此时可以根据两个offset找出从节点缺少的那部分数据。</p>
+<p>复制缓冲区：复制缓冲区是由主节点维护的、固定长度的、先进先出队列，默认大小1MB，当主节点开始有从节点时创建。在命令传播阶段，主节点除了将写命令发送给从节点，还会发送一份给复制缓冲区，作为写命令的备份。除了存储写命令，复制缓冲区中还存储了其中的每个字节对应的复制偏移量（offset）。由于复制缓冲区定长且是先进先出，所以它保存的是主节点最近执行的写命令，时间较早的写命令会被挤出缓冲区，因此当主从节点offset的差距过大超过缓冲区长度时，将无法执行部分复制，只能执行全量复制。</p>
+<p>服务器运行ID（runid）：每个Redis节点（无论主从），在启动时都会自动生成一个随机ID（每次启动都不一样），runid用来唯一识别一个Redis节点。主从节点初次复制时，主节点将自己的runid发送给从节点，从节点将这个runid保存起来。当断线重连时，从节点会将这个runid发送给主节点；主节点根据runid判断能否进行部分复制：</p>
+<ul>
+<li>如果从节点保存的runid与主节点现在的runid相同，说明主从节点之前同步过，主节点会继续尝试使用部分复制(到底能不能部分复制还要看offset和复制积压缓冲区的情况)；</li>
+<li>如果从节点保存的runid与主节点现在的runid不同，说明从节点在断线前同步的Redis节点并不是当前的主节点，只能进行全量复制。</li>
+</ul>
+<h3 id="命令传播阶段"><a href="#命令传播阶段" class="headerlink" title="命令传播阶段"></a>命令传播阶段</h3><p>数据同步阶段完成后，主从节点进入命令传播阶段。在这个阶段主节点将自己执行的写命令发送给从节点，从节点接收命令并执行，从而保证主从节点数据的一致性。需要注意的是，命令传播是异步的过程，即主节点发送写命令后并不会等待从节点的回复，因此实际上主从节点之间很难保持实时的一致性，延迟在所难免。</p>
+<h2 id="故障转移"><a href="#故障转移" class="headerlink" title="故障转移"></a>故障转移</h2><p>在没有使用哨兵或集群的场景下，当主节点挂掉了以后，从节点没法完成master选举，从而导致整个服务对外不可用。我们需要自行选择一个从节点作为主节点并继续对外提供服务，并将其它从节点的主节点设为它，由于这些过程都需要手动完成，出错率比较高，因此在真实场景中往往都会使用哨兵或者集群来实现系统的高可用。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>《Redis开发与运维》</li>
+<li><a href="https://www.cnblogs.com/kismetv/p/9236731.html" target="_blank" rel="noopener">深入学习Redis（3）：主从复制</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/Redis/"># Redis</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/03/30/Redis-Sentinel/">Redis Sentinel</a>
+            
+            
+            <a class="next" rel="next" href="/2019/03/30/Redis五种数据类型/">Redis持久化：AOF与RDB</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

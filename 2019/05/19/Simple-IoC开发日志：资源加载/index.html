@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>Simple IoC开发日志：资源加载 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Simple IoC开发日志：资源加载</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">May 19, 2019&nbsp;&nbsp;21:51:40</a>
+                        </span>
+                    
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="Spring-IoC实现"><a href="#Spring-IoC实现" class="headerlink" title="Spring IoC实现"></a>Spring IoC实现</h2><p>Spring对资源文件和资源的加载都做了统一的抽象，以下是资源文件的继承体系：<br><img src="http://img.hecenjie.cn/spring-201805091003.jpg" alt></p>
+<p>其中，顶层接口<code>InputStreamSource</code>只包含一个<code>getInputStream()</code>方法用于返回指定资源的<code>InputStream</code>；而<code>Resource</code>是对资源的一个抽象，里面提供了判断资源是否存在、资源是否可读、资源大小等常见接口，并且大部分接口由抽象子类<code>AbstractResource</code>提供了默认实现，而一些方法则由具体的子类如<code>FileSystemResource</code>、<code>ClassPathResource</code>等覆写，以满足特定的场景需求。</p>
+<p>接下来看看Spring对资源加载的统一抽象，同样从它的继承体系说起：<br><img src="http://img.hecenjie.cn/FileSystemResourceLoader.png" alt></p>
+<p>与<code>AbstractResource</code>相似，<code>DefaultResourceLoader</code>是<code>ResourceLoader</code>的默认实现。其中<code>getResource()</code>方法是其核心（两个子类都没覆盖该方法），它根据方法参数<code>location</code>的内容来决定到底是返回<code>ClassPathResource</code>还是<code>FileSystemResource</code>还是<code>Resource</code>其它的一些子类。由于在默认的实现策略中，凡是以<code>/</code>开头的都会返回<code>ClassPathContextResource</code>类型的资源，但对于<code>/user/hecenjie/test.xml</code>这样的路径我们更加希望是<code>FileSystemResource</code>类型的资源，因此在子类<code>FileSystemResourceLoader</code>中覆写了相关方法，使之可以从文件系统中获取资源；而另一个子类<code>ClassRelativeResourceLoader</code>则扩展了功能，可以根据给定的Class所在包或者所在包的子包下加载资源。</p>
+<p><code>ResourceLoader</code>的另一个重要实现是<code>ResourcePatternResolver</code>，与上面的<code>ResourceLoader</code>实现类不同的是，它支持根据指定的资源路径匹配模式每次返回多个<code>Resource</code>实例（也就是<code>Resource</code>数组），并且它也新增了一种新的协议前缀<code>classpath*:</code>，该前缀表示可以加载多个jar包中相同的资源文件，而<code>classpath:</code>只能加载找到的第一个文件。</p>
+<p><code>PathMatchingResourcePatternResolver</code>除了支持<code>ResourceLoader</code>和<code>ResourcePatternResolver</code>新增的<code>classpath*:</code>前缀外，还支持Ant风格的路径匹配模式（类似于<code>**/*.xml</code>）。</p>
+<h2 id="Simple-IoC实现"><a href="#Simple-IoC实现" class="headerlink" title="Simple IoC实现"></a>Simple IoC实现</h2><p>目前自己实现的IoC容器中，只实现了文件系统的资源与加载抽象，以下为它们各自的类图：<br><img src="http://img.hecenjie.cn/FileSystemResource.png" alt> </p>
+<p><img src="http://img.hecenjie.cn/FileSystemResourceLoader1.png" alt></p>
+<h2 id="快速使用"><a href="#快速使用" class="headerlink" title="快速使用"></a>快速使用</h2><p>我们可以尝试写一些简单的单元测试从文件系统中加载指定的资源，并对该资源做一些基本操作。首先，准备一个<code>test.xml</code>文件，然后编写以下测试方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testFileSystemResource</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    Resource resource = <span class="keyword">new</span> FileSystemResource(<span class="string">"C:\\Users\\canjie\\Desktop\\test.xml"</span>);</span><br><span class="line">    assertTrue(resource.exists());</span><br><span class="line">    assertEquals(resource.contentLength(), <span class="number">992</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testFileSystemResourceLoader</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    ResourceLoader resourceLoader = <span class="keyword">new</span> FileSystemResourceLoader();</span><br><span class="line">    Resource resource = resourceLoader.getResource(<span class="string">"C:\\Users\\canjie\\Desktop\\test.xml"</span>);</span><br><span class="line">    assertTrue(resource.exists());</span><br><span class="line">    assertEquals(resource.contentLength(), <span class="number">992</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/05/19/Simple-IoC开发日志：BeanDefinition加载/">Simple IoC开发日志：注册BeanDefinitions</a>
+            
+            
+            <a class="next" rel="next" href="/2019/05/19/Mybatis之Mapper接口/">Mybatis之Mapper接口</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

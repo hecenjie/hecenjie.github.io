@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>电商项目优化实践 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">电商项目优化实践</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">February 5, 2019&nbsp;&nbsp;21:24:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/项目/">项目</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <p>本篇日志将记录之前做过的mmall项目的一些优化过程，主要包括JVM调优和数据库优化两个方面，通过不断动手实践并总结心得，希望能在此积累起许多经验，为以后能更得心应手的写出高效而又稳健的代码打好基础。</p>
+<a id="more"></a>
+<h2 id="商品表的优化"><a href="#商品表的优化" class="headerlink" title="商品表的优化"></a>商品表的优化</h2><p>在实际应用中我们往往都会遇到根据名称来查询某个商品或者根据昵称查询某个用户，如果返回的行数较多则要使用分页，而之前项目一直都是使用的PageHelper这个框架来完成分页功能的，这么做自然简单方便，但是当数据量达到几十万甚至百万时就会遇到性能瓶颈，尽管能够使用一些索引进行优化，但一个查询仍然需要十几二十秒才能完成，显然还远不能达标。在阅读PageHelper源码后可以发现，之所以会发生这种情况是因为PageHelper主要是通过拼接<code>LIMIT</code>语句来实现分页功能的，我们知道<code>LIMIT</code>在偏移量很大的时候会扫描很多不必要的行，因此需要对查询进行改进才能更好的应用在数据量比较大的场景下。</p>
+<p>我们先建立一张商品表，还未在上面建立任何索引（除主键外）：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">DROP</span> <span class="keyword">TABLE</span> <span class="keyword">IF</span> <span class="keyword">EXISTS</span> <span class="string">`mmall_product`</span>;</span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> <span class="string">`mmall_product`</span> (</span><br><span class="line">  <span class="string">`id`</span> <span class="built_in">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> AUTO_INCREMENT <span class="keyword">COMMENT</span> <span class="string">'商品id'</span>,</span><br><span class="line">  <span class="string">`category_id`</span> <span class="built_in">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">COMMENT</span> <span class="string">'分类id,对应mmall_category表的主键'</span>,</span><br><span class="line">  <span class="string">`name`</span> <span class="built_in">varchar</span>(<span class="number">100</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">COMMENT</span> <span class="string">'商品名称'</span>,</span><br><span class="line">  <span class="string">`subtitle`</span> <span class="built_in">varchar</span>(<span class="number">200</span>) <span class="keyword">DEFAULT</span> <span class="literal">NULL</span> <span class="keyword">COMMENT</span> <span class="string">'商品副标题'</span>,</span><br><span class="line">  <span class="string">`main_image`</span> <span class="built_in">varchar</span>(<span class="number">500</span>) <span class="keyword">DEFAULT</span> <span class="literal">NULL</span> <span class="keyword">COMMENT</span> <span class="string">'产品主图,url相对地址'</span>,</span><br><span class="line">  <span class="string">`sub_images`</span> <span class="built_in">text</span> <span class="keyword">COMMENT</span> <span class="string">'图片地址,json格式,扩展用'</span>,</span><br><span class="line">  <span class="string">`detail`</span> <span class="built_in">text</span> <span class="keyword">COMMENT</span> <span class="string">'商品详情'</span>,</span><br><span class="line">  <span class="string">`price`</span> <span class="built_in">decimal</span>(<span class="number">20</span>,<span class="number">2</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">COMMENT</span> <span class="string">'价格,单位-元保留两位小数'</span>,</span><br><span class="line">  <span class="string">`stock`</span> <span class="built_in">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">COMMENT</span> <span class="string">'库存数量'</span>,</span><br><span class="line">  <span class="string">`status`</span> <span class="built_in">int</span>(<span class="number">6</span>) <span class="keyword">DEFAULT</span> <span class="string">'1'</span> <span class="keyword">COMMENT</span> <span class="string">'商品状态.1-在售 2-下架 3-删除'</span>,</span><br><span class="line">  <span class="string">`create_time`</span> datetime <span class="keyword">DEFAULT</span> <span class="literal">NULL</span> <span class="keyword">COMMENT</span> <span class="string">'创建时间'</span>,</span><br><span class="line">  <span class="string">`update_time`</span> datetime <span class="keyword">DEFAULT</span> <span class="literal">NULL</span> <span class="keyword">COMMENT</span> <span class="string">'更新时间'</span>,</span><br><span class="line">  PRIMARY <span class="keyword">KEY</span> (<span class="string">`id`</span>)</span><br><span class="line">) <span class="keyword">ENGINE</span>=<span class="keyword">InnoDB</span> AUTO_INCREMENT=<span class="number">30</span> <span class="keyword">DEFAULT</span> <span class="keyword">CHARSET</span>=utf8;</span><br></pre></td></tr></table></figure>
+<p>接着使用存储过程往里面插入100万条数据，为了提高插入时的速度，需要先修改<code>my.ini</code>配置文件的以下两处：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">innodb_flush_log_at_trx_commit=0</span><br><span class="line">max_allowed_packet=100M</span><br></pre></td></tr></table></figure>
+<p>重启MySQL后再执行以下代码：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">drop</span> <span class="keyword">procedure</span> <span class="keyword">if</span> <span class="keyword">exists</span> product_insert;</span><br><span class="line">DELIMITER ;; </span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">PROCEDURE</span> product_insert() </span><br><span class="line"><span class="keyword">BEGIN</span> </span><br><span class="line"><span class="keyword">DECLARE</span> y <span class="built_in">INT</span> <span class="keyword">DEFAULT</span> <span class="number">1</span>;</span><br><span class="line">WHILE y &lt; 100000</span><br><span class="line"><span class="keyword">DO</span></span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> mmall_product(category_id, <span class="keyword">name</span>, subtitle, main_image, sub_images, detail, price, stock, <span class="keyword">status</span>, create_time, update_time) </span><br><span class="line"><span class="keyword">values</span>(y%<span class="number">30</span>+<span class="number">100001</span>, <span class="string">'ab'</span>, <span class="keyword">substring</span>(<span class="keyword">MD5</span>(<span class="keyword">RAND</span>()),<span class="number">15</span>,<span class="number">20</span>), </span><br><span class="line"><span class="string">'241997c4-9e62-4824-b7f0-7425c3c28917.jpeg'</span>, </span><br><span class="line"><span class="string">'241997c4-9e62-4824-b7f0-7425c3c28917.jpeg,b6c56eb0-1748-49a9-98dc-bcc4b9788a54.jpeg,92f17532-1527-4563-aa1d-ed01baa0f7b2.jpeg,3adbe4f7-e374-4533-aa79-cc4a98c529bf.jpeg'</span>, </span><br><span class="line"><span class="string">'&lt;p&gt;&lt;img alt="miaoshu.jpg" src="http://img.happymmall.com/9c5c74e6-6615-4aa0-b1fc-c17a1eff6027.jpg" width="790" height="444"&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;img alt="miaoshu2.jpg" src="http://img.happymmall.com/31dc1a94-f354-48b8-a170-1a1a6de8751b.jpg" width="790" height="1441"&gt;&lt;img alt="miaoshu3.jpg" src="http://img.happymmall.com/7862594b-3063-4b52-b7d4-cea980c604e0.jpg" width="790" height="1442"&gt;&lt;img alt="miaoshu4.jpg" src="http://img.happymmall.com/9a650563-dc85-44d6-b174-d6960cfb1d6a.jpg" width="790" height="1441"&gt;&lt;br&gt;&lt;/p&gt;'</span>,</span><br><span class="line"><span class="keyword">RAND</span>() * <span class="number">10000</span>,</span><br><span class="line"><span class="keyword">RAND</span>() * <span class="number">100</span>,</span><br><span class="line"><span class="number">1</span>, <span class="keyword">now</span>(), <span class="keyword">now</span>()); </span><br><span class="line"><span class="keyword">SET</span> y=y+<span class="number">1</span>; </span><br><span class="line"><span class="keyword">END</span> <span class="keyword">WHILE</span> ; </span><br><span class="line"><span class="keyword">commit</span>; </span><br><span class="line"><span class="keyword">END</span>;; </span><br><span class="line"><span class="keyword">CALL</span> product_insert();</span><br></pre></td></tr></table></figure>
+<p>这里的商品名、子标题等都使用的随机字符串，没有太多考究。此时就可以根据商品名<code>name</code>按价格<code>price</code>排序后进行查询了：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> mmall_product <span class="keyword">WHERE</span> <span class="keyword">name</span> = <span class="string">'ab'</span> <span class="keyword">ORDER</span> <span class="keyword">BY</span> price <span class="keyword">LIMIT</span> <span class="number">100</span>, <span class="number">10</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> mmall_product <span class="keyword">WHERE</span> <span class="keyword">name</span> = <span class="string">'ab'</span> <span class="keyword">ORDER</span> <span class="keyword">BY</span> price <span class="keyword">LIMIT</span> <span class="number">1000</span>, <span class="number">10</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> mmall_product <span class="keyword">WHERE</span> <span class="keyword">name</span> = <span class="string">'ab'</span> <span class="keyword">ORDER</span> <span class="keyword">BY</span> price <span class="keyword">LIMIT</span> <span class="number">10000</span>, <span class="number">10</span>;</span><br></pre></td></tr></table></figure>
+<p>执行时间如下：</p>
+<p><img src="http://blog.default.nanwulife.com/3%29G5S7ZTBRINMZQEQ_%29ZLZH.png" alt></p>
+<p>可以看出，在不断增大<code>LIMIT</code>的偏移量后，查询时间着实吓人，通过<code>EXPLAIN</code>分析执行计划发现<code>type</code>那列显示<code>ALL</code>，说明要全表扫描一百多万行，并且还有<code>Using filesort</code>。我们先根据<code>WHERE</code>语句和<code>ORDER BY</code>语句建立如下组合索引：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> mmall_product <span class="keyword">ADD</span> <span class="keyword">INDEX</span> index_name_price (<span class="keyword">name</span>, price);</span><br></pre></td></tr></table></figure>
+<p>执行<code>SHOW INDEX FROM mmall_product;</code>查看索引是否添加如下：</p>
+<p><img src="http://img.hecenjie.cn/%288R%5D%29J%5BT2B16EP87J6%60%7D%289V.png" alt></p>
+<p>这时在初步优化后分析执行计划可以看到查询不再是全表扫描，而是使用到了上面的索引，效率有所提升，但此时增大偏移量后查询依然会变得十分缓慢，还需要进一步优化。这里就可以用到“延迟关联”的技巧，由于LIMIT每扫描一行时都要去主索引拿到许多不必要的数据再丢弃，那么可以让其先在二级索引覆盖扫描得到满足条件的id，然后再与原表关联得到最终结果，代码如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> mmall_product </span><br><span class="line"><span class="keyword">INNER</span> <span class="keyword">JOIN</span> (<span class="keyword">SELECT</span> <span class="keyword">id</span> <span class="keyword">FROM</span> mmall_product <span class="keyword">WHERE</span> <span class="keyword">name</span> = <span class="string">'ab'</span> <span class="keyword">ORDER</span> <span class="keyword">BY</span> price <span class="keyword">LIMIT</span> <span class="number">100000</span>, <span class="number">10</span>) <span class="keyword">AS</span> mmall_product_id <span class="keyword">USING</span>(<span class="keyword">id</span>);</span><br></pre></td></tr></table></figure>
+<p>此时，就算偏移量为一百万时，查询也可以很轻松的在0.5S内完成，效果还是令人满意的。</p>
+<p><img src="http://img.hecenjie.cn/%7D6%7BS@%25E2MGMXK_%29%29~JPZ6BT.png" alt></p>
+<blockquote>
+<p>PageHelper原理：PageHelper实现了MyBatis提供的<code>Interceptor</code>接口得到分页拦截器<code>PageInterceptor</code>，使用分页查询的时候，先调用<code>PageHelper.startPage</code>在当前线程上下文中设置一个<code>ThreadLocal</code>变量，分页拦截器拦截到SQL后会从<code>ThreadLocal</code>中拿到分页的信息，拼接分页语句并进行分页查询，最后再把<code>ThreadLocal</code>中的东西清除掉。</p>
+</blockquote>
+<h2 id="GC调优"><a href="#GC调优" class="headerlink" title="GC调优"></a>GC调优</h2><p>看了《深入理解Java虚拟机》也有一段时间了，书本的知识虽然都能理解，但实际的优化却从来没试过，这方面可以说是毫无经验。都说读万卷书不如行万里路，在网上看了一些GC优化的实际案例后，决定亲自动手在这个项目中尝试一下。</p>
+<p>这次实践使用的垃圾收集器为ParNew+CMS（CMS失败时Serial Old替补）。首先通过以下参数设置垃圾收集器并打开GC日志：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">-XX:+UseConcMarkSweepGC</span><br><span class="line">-XX:+UseParNewGC</span><br><span class="line">-XX:+PrintGC</span><br><span class="line">-Xloggc:C:\Users\canjie\Desktop\gc.log</span><br><span class="line">-XX:+PrintHeapAtGC</span><br><span class="line">-XX:+PrintGCDateStamps</span><br></pre></td></tr></table></figure></p>
+<p>然后使用jmeter工具模拟多用户持续请求接口的场景，这里设置的一分钟的用户数5000人。jemeter的聚合报告显示如下，主要关注TP99这一指标：</p>
+<p><img src="http://img.hecenjie.cn/GB44HLUCJSFK~%28HS%290%60M%7B9E.png" alt></p>
+<p>请求结束后分析GC日志发现Minor GC执行的十分频繁，而Major GC仅仅五分钟内就执行了好几次，每次耗时约0.2s，频繁且耗时的STW对接口响应时间造成了很大的影响，对于追求低延时的服务来说肯定是不可取的。要想优化就必须得先知其原因，首先JVM的默认内存为64M，这肯定是不够的，其次频繁的Major GC主要是因为老年代的空间不够，那接下来就是通过调整总堆大小以及年轻代和老年代的比例来减少GC的频率和STW的时间。当然，这里的内存不是调的越大越好，调的过小会导致GC频率过高，而调的过大虽然GC频率降低了，但每次GC的耗时也会变长。</p>
+<p>先通过GC日志得到活跃数据的大小（活跃数据的大小是指Full GC后堆中老年代占用空间的大小），然后通过以下策略设置基本参数：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">空间</th>
+<th style="text-align:center">倍数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">总堆</td>
+<td style="text-align:center">3-4 倍活跃数据的大小</td>
+</tr>
+<tr>
+<td style="text-align:center">新生代</td>
+<td style="text-align:center">1-1.5 活跃数据的大小</td>
+</tr>
+<tr>
+<td style="text-align:center">老年代</td>
+<td style="text-align:center">2-3 倍活跃数据的大小</td>
+</tr>
+<tr>
+<td style="text-align:center">永久代</td>
+<td style="text-align:center">1.2-1.5 倍Full GC后的永久代空间占用</td>
+</tr>
+</tbody>
+</table>
+<p>我在这个例子中经过计算后设置的参数如下：</p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">-Xmx640m</span><br><span class="line">-Xms640m</span><br><span class="line">-XX:NewSize=240m</span><br><span class="line">-XX:MaxNewSize=240m</span><br></pre></td></tr></table></figure>
+<p>此时再启动项目并用jmeter模拟真实环境进行测试，可以发现调大总堆大小并设置合适的年轻代与老年代的比例后，Minor GC每分钟的频率已经降到了70-80次，而Major GC十分钟才会出现一次，每次的耗时在100ms以下，TP95下降了约10ms，TP99下降了约100ms。</p>
+<p><img src="http://img.hecenjie.cn/0Y%5D$ZI%60U6X6J052%25CSB2VTU.png" alt></p>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/MySQL/"># MySQL</a>
+                    
+                        <a href="/tags/项目/"># 项目</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/02/06/Spring框架知识点总结/">Spring框架知识点总结</a>
+            
+            
+            <a class="next" rel="next" href="/2019/02/03/Java实现生产者-消费者模型/">Java阻塞队列实现生产者-消费者模型</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

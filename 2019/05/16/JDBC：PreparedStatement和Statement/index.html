@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>JDBC：PreparedStatement和Statement | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">JDBC：PreparedStatement和Statement</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">May 16, 2019&nbsp;&nbsp;14:49:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/MySQL/">MySQL</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="MySQL支持预编译"><a href="#MySQL支持预编译" class="headerlink" title="MySQL支持预编译"></a>MySQL支持预编译</h2><p>在不使用预编译时，客户端每发送一条sql语句给服务器后，服务器总是需要校验sql语句的语法格式是否正确，然后把sql语句编译成可执行函数，最后才是执行sql语句。其中，校验语法和编译所花的时间可能比执行sql语句花的时间还要多。因此，如果我们需要执行多次<code>insert</code>语句，但每次只是插入的值不同，MySQL都要校验语法和编译，会浪费许多时间，而如果使用预编译功能，那么就只用对sql语句进行一次语法校验和编译，所以效率要高。</p>
+<p>MySQL本身是支持预编译的，MySQL执行预编译分为如下三步：</p>
+<ol>
+<li>执行预编译语句，例如：<code>prepare myFunc from &#39;select * from user where username like ?&#39;</code></li>
+<li>设置变量，例如：<code>set @username=&#39;%小明%&#39;</code></li>
+<li>执行语句，例如：<code>execute myFunc using @username</code></li>
+</ol>
+<p>如果需要再次执行<code>myFunc</code>，那就不再需要第一步，即不需要再编译语句了：</p>
+<ol>
+<li>设置变量，例如：<code>set @username=&#39;%小宋%&#39;</code></li>
+<li>执行语句，例如：<code>execute myFunc using @username</code></li>
+</ol>
+<h2 id="PreparedStatement使用预编译"><a href="#PreparedStatement使用预编译" class="headerlink" title="PreparedStatement使用预编译"></a>PreparedStatement使用预编译</h2><p>JDBC的<code>PreparedStatement</code>接口是有预编译功能的，但是在JDBC MySQL驱动5.0.5以后的版本默认是关闭预编译功能的，因此如果我们不手动开启的话，其实并没有使用到预编译，只是用到了防止sql注入的功能。要开启预编译功能，我们需要设置MySQL连接URL参数：<code>useServerPrepStmts=true</code>，这样才能保证MySQL驱动会先把sql语句发送给服务器进行预编译，然后在执行<code>executeQuery()</code>时只是把参数发送给服务器。</p>
+<p>注意：通过设置MySQL连接参数，目的是告诉MySQL<code>PreparedStatement</code>使用预编译功能，但不管我们是否使用预编译功能，MySQL Server4.1版本以后都是支持预编译功能的。</p>
+<p>当使用不同的<code>PreparedStatement</code>对象来执行相同的sql语句时，还是会出现编译两次的现象，这是因为驱动没有缓存编译后的函数key，导致二次编译。但在实际的应用场景中，我们不可能保持同一个<code>PreparedStatement</code>，此时如果希望缓存编译后的函数的key，那么就要设置MySQL连接参数<code>cachePrepStmts=true</code>。</p>
+<h2 id="在持久层框架中存在的问题"><a href="#在持久层框架中存在的问题" class="headerlink" title="在持久层框架中存在的问题"></a>在持久层框架中存在的问题</h2><p>很多主流持久层框架其实都没有真正的用上预编译，预编译是要我们自己在连接参数上配置的。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li>MySQL主流版本是支持预编译的，但<code>PremaredStatement</code>在JDBC MySQL驱动5.0.5以后需要手动配置连接参数才可以使用预编译功能，如果同时也开启了缓存，那么MySQL服务器是会缓存编译后的函数，而编译后的函数key缓存在<code>PreparedStatement</code>中，此时不同的<code>PreparedStatement</code>执行相同的sql语句时不会重复编译，也就提高了效率。</li>
+<li><code>Statement</code>对于MySQL数据库是不会对编译后的函数进行缓存的，数据库不会缓存函数，<code>Statement</code>也不会缓存函数的key，所以多次执行相同的sql语句时，还是会先检查sql语句语法是否正确，然后编译sql语句成函数，最后执行函数。</li>
+<li>因为<code>PreparedStatement</code>已经对sql模板进行了编译，并且存储了函数，所以<code>PreparedStatement</code>做的就是把参数进行转义后直接传入参数到数据库，然后让函数执行，这也就是为什么<code>PreparedStatement</code>能够防止sql注入攻击的原因。</li>
+<li><code>PreparedStatement</code>还有一点要注意的是，在数据库端存储的函数和<code>PreparedStatement</code>中存储的函数key，都是建立在数据库连接的基础上的，如果当前数据库连接断开了，数据库端的函数会清空，建立在连接上的<code>PreparedStatement</code>里面的函数key也会被清空。</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://blog.csdn.net/Marvel__Dead/article/details/69486947" target="_blank" rel="noopener">JDBC：深入理解PreparedStatement和Statement</a></li>
+<li><a href="https://cs-css.iteye.com/blog/1847772" target="_blank" rel="noopener">探究mysql预编译</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/PreparedStatement/"># PreparedStatement</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/05/16/MyBatis架构设计/">MyBatis架构设计</a>
+            
+            
+            <a class="next" rel="next" href="/2019/05/12/Java线程池源码分析/">Java线程池源码分析</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

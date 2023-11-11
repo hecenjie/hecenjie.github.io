@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>常见查找算法之跳跃表 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">常见查找算法之跳跃表</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">May 28, 2019&nbsp;&nbsp;20:06:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/算法/">算法</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>跳跃表（skiplist）是一种有序数据结构，它通过在每个节点中维持多个指向其他节点的指针，从而达到快速访问节点的目的。</p>
+<p>跳跃表支持平均O(logN)和最坏O(N)复杂度的节点查找，还可以通过顺序性操作来批量处理节点。在大部分情况下，跳跃表的效率可以和平衡树相媲美，并且因为跳跃表的实现比平衡树要来得更为简单，所以有不少程序都使用跳跃表来代替平衡树。</p>
+<h2 id="跳跃表的实现"><a href="#跳跃表的实现" class="headerlink" title="跳跃表的实现"></a>跳跃表的实现</h2><p>Redis的跳跃表由<code>zskiplistNode</code>和<code>zskiplist</code>两个结构定义，其中<code>zskiplistNode</code>结构用于表示跳跃表节点，而<code>zskiplist</code>结构则用于保存跳跃表节点的相关信息，比如节点的数量，以及指向表头节点和表尾节点的指针等等。</p>
+<p><img src="http://img.hecenjie.cn/graphviz-8fc5de396a5b52c3d0b1991a1e09558ad055dd86.png" alt></p>
+<p>图5-1展示了一个跳跃表示例，位于图片最左边的是<code>zskiplist</code>结构，该结构包含以下属性：</p>
+<ul>
+<li><code>header</code>：指向跳跃表的表头节点。</li>
+<li><code>tail</code>：指向跳跃表的表尾节点。</li>
+<li><code>level</code>：记录目前跳跃表内，层数最大的那个节点的层数（表头节点的层数不计算在内）。</li>
+<li><code>length</code>：记录跳跃表的长度，也即是，跳跃表目前包含节点的数量（表头节点不计算在内）。</li>
+</ul>
+<p>位于<code>zskiplist</code>结构右方的是四个<code>zskiplistNode</code>结构，该结构包含以下属性：</p>
+<ul>
+<li>层（level）：节点中用 L1 、 L2 、 L3 等字样标记节点的各个层，L1 代表第一层， L2 代表第二层，以此类推。每个层都带有两个属性：前进指针和跨度。前进指针用于访问位于表尾方向的其他节点，而跨度则记录了前进指针所指向节点和当前节点的距离。每次创建一个新跳跃表节点的时候， 程序都根据幂次定律（power law，越大的数出现的概率越小）随机生成一个介于1和32之间的值作为层的高度。跨度是用来计算排位（rank）的，在查找某个节点的过程中，将沿途访问过的所有层的跨度累计起来，得到的结果就是目标节点在跳跃表中的排位。</li>
+<li>后退（backward）指针：节点中用 BW 字样标记节点的后退指针，它指向位于当前节点的前一个节点。后退指针在程序从表尾向表头遍历时使用。跟可以一次跳过多个节点的前进指针不同，因为每个节点只有一个后退指针，所以每次只能后退至前一个节点。</li>
+<li>分值（score）：各个节点中的 1.0 、 2.0 和 3.0 是节点所保存的分值。在跳跃表中，节点按各自所保存的分值从小到大排列。</li>
+<li>成员对象（obj）：各个节点中的 o1、o2 和 o3 是节点所保存的成员对象。分值相同的节点将按照成员对象在字典序中的大小来进行排序，成员对象较小的节点会排在前面，而成员对象较大的节点则会排在后面。</li>
+</ul>
+<p>注意表头节点和其他节点的构造是一样的：表头节点也有后退指针、分值和成员对象，不过表头节点的这些属性都不会被用到，所以图中省略了这些部分，只显示了表头节点的各个层。</p>
+<p>虽然仅靠多个跳跃表节点就可以组成一个跳跃表，但通过使用一个<code>zskiplist</code>结构来持有这些节点，程序可以更方便地对整个跳跃表进行处理，比如快速访问跳跃表的表头节点和表尾节点，又或者快速地获取跳跃表节点的数量（也即是跳跃表的长度）等信息。</p>
+<h3 id="查找"><a href="#查找" class="headerlink" title="查找"></a>查找</h3><p>跳跃表的查找是从最上层的跳跃区间大的层开始的，从头结点开始和前进指针指向的节点进行比较，如果大于前进节点，则继续向前找，如果小于前进节点，则到下一层继续查找，直到找到为止。</p>
+<h3 id="插入"><a href="#插入" class="headerlink" title="插入"></a>插入</h3><p>跳跃表的插入操作和链表的插入操作十分相似，大致过程如下：</p>
+<ol>
+<li>查找到需要插入的位置</li>
+<li>申请新的结点</li>
+<li>调整指针</li>
+</ol>
+<p>因为找到插入点之后，新生成节点，新节点的层的高度是随机生成的，故需要保存所有层的后继指针。</p>
+<h3 id="删除"><a href="#删除" class="headerlink" title="删除"></a>删除</h3><p>删除和插入类似，大致过程如下：</p>
+<ol>
+<li>查找到需要删除的结点 </li>
+<li>删除结点</li>
+<li>调整指针</li>
+</ol>
+<h3 id="时间复杂度"><a href="#时间复杂度" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><ul>
+<li>最坏时间复杂度 О(n)</li>
+<li>平均时间复杂度 O(logn)</li>
+</ul>
+<h2 id="Redis中的应用"><a href="#Redis中的应用" class="headerlink" title="Redis中的应用"></a>Redis中的应用</h2><p>Redis使用跳跃表作为有序集合键的底层实现之一：如果一个有序集合包含的元素数量比较多，又或者有序集合中元素的成员是比较长的字符串时，Redis就会使用跳跃表来作为有序集合键的底层实现。而之所以不使用红黑树，是因为在性能相差不大的情况下，跳跃表实现更为简单。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li>跳跃表是有序集合的底层实现之一。</li>
+<li>Redis的跳跃表实现由<code>zskiplist</code>和<code>zskiplistNode</code>两个结构组成，其中<code>zskiplist</code>用于保存跳跃表信息（比如表头节点、表尾节点、长度），而<code>zskiplistNode</code>则用于表示跳跃表节点。</li>
+<li>每个跳跃表节点的层高都是1至32之间的随机数。</li>
+<li>在同一个跳跃表中，多个节点可以包含相同的分值，但每个节点的成员对象必须是唯一的。</li>
+<li>跳跃表中的节点按照分值大小进行排序，当分值相同时，节点按照成员对象的大小进行排序。</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="http://redisbook.com/preview/skiplist/datastruct.html" target="_blank" rel="noopener">Redis 设计与实现</a></li>
+<li><a href="https://blog.csdn.net/yang_yulei/article/details/46275283" target="_blank" rel="noopener">查找——图文翔解SkipList（跳跃表）</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/Redis/"># Redis</a>
+                    
+                        <a href="/tags/跳跃表/"># 跳跃表</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/05/30/关于Java和Python的一些思考/">关于Java和Python的一些思考</a>
+            
+            
+            <a class="next" rel="next" href="/2019/05/28/Drools规则引擎原理简介/">Drools规则引擎原理简介</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

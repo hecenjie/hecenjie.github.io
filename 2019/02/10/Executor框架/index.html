@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>Java线程池与Executor框架 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Java线程池与Executor框架</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">February 10, 2019&nbsp;&nbsp;18:27:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/并发/">并发</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="为什么要使用线程池"><a href="#为什么要使用线程池" class="headerlink" title="为什么要使用线程池"></a>为什么要使用线程池</h2><ul>
+<li>降低资源消耗：通过重复利用已创建的线程降低线程创建和销毁造成的消耗。</li>
+<li>提高响应速度：当任务到达时，任务可以不需要等到线程创建就能立即执行。</li>
+<li>提高线程的可管理性：线程是稀缺资源，使用线程池可以进行统一分配、调优和监控。</li>
+</ul>
+<a id="more"></a>
+<h2 id="线程池的实现原理"><a href="#线程池的实现原理" class="headerlink" title="线程池的实现原理"></a>线程池的实现原理</h2><p><img src="http://blog.default.nanwulife.com/1787733-248f411a83669fff.webp" alt></p>
+<ol>
+<li>如果当前运行的线程少于<code>corePoolSize</code>，则创建新线程来执行任务（这一步需获取全局锁）。</li>
+<li>如果运行的线程等于或多于<code>corePoolSize</code>，则将任务加入<code>BlockingQueue</code>。</li>
+<li>如果队列已满，则创建新的线程来处理任务（这一步需获取全局锁）。</li>
+<li>如果创建新线程将使当前运行的线程超出<code>maximumPoolSize</code>，任务将被拒绝，并使用相关饱和策略进行处理，默认是直接抛出异常。</li>
+</ol>
+<p>之所以采用这个步骤，是因为在执行<code>execute()</code>方法时，尽可能地避免获取全局锁。在线程池完成预热之后（当前运行的线程数大于等于<code>corePoolSize</code>），几乎所有的<code>execute()</code>方法调用都是执行步骤2，而步骤2不需要获取全局锁。</p>
+<h2 id="Executor框架"><a href="#Executor框架" class="headerlink" title="Executor框架"></a>Executor框架</h2><p>Executor框架内部使用了线程池机制，它在<code>java.util.cocurrent</code>包下，通过该框架来控制线程的启动、执行和关闭，可以简化并发编程的操作。因此，通过<code>Executor</code>来启动线程比使用<code>Thread</code>的<code>start()</code>方法更易管理且效率更好。</p>
+<h2 id="Executor框架的结构与成员"><a href="#Executor框架的结构与成员" class="headerlink" title="Executor框架的结构与成员"></a>Executor框架的结构与成员</h2><p><img src="http://blog.default.nanwulife.com/6021163-4e29a753826e7d23.webp" alt></p>
+<h3 id="ThreadPoolExecutor"><a href="#ThreadPoolExecutor" class="headerlink" title="ThreadPoolExecutor"></a>ThreadPoolExecutor</h3><p><code>ThreadPoolExecutor</code>是Executor框架的最核心的类，是线程池的实现类，用来执行被提交的任务，通常使用工厂类<code>Executors</code>来创建，有以下三种类型：</p>
+<ul>
+<li><code>FixedThreadPool</code>：线程数固定。适用于为了满足资源管理而需要限制线程数的场景，适用于负载比较重的服务器。</li>
+<li><code>SingleThreadExecutor</code>：只有一个线程。适用于需要保证顺序地执行各个任务，并且在任意时间点不会有多个线程是活动的场景。</li>
+<li><code>CachedThreadPool</code>：根据需要创建新线程。空闲线程等待新任务超过60秒就会被终止。适用于执行很多短期异步任务的小程序，或者是负载较轻的服务器。</li>
+</ul>
+<p><code>FixedThreadPool</code>和<code>SingleThreadExecutor</code>使用无界队列<code>LinkedBlockingQueue</code>作为线程池的工作队列。<code>CachedThreadPool</code>使用没有容量的<code>SynchronousQueue</code>作为线程池的工作队列。</p>
+<h3 id="ScheduledThreadPoolExecutor"><a href="#ScheduledThreadPoolExecutor" class="headerlink" title="ScheduledThreadPoolExecutor"></a>ScheduledThreadPoolExecutor</h3><p><code>ScheduledThreadPoolExecutor</code>继承自<code>ThreadPoolExecutor</code>，主要用来在给定的延迟之后运行任务，或者定期执行任务。<code>ScheduledThreadPoolExecutor</code>的功能与<code>Timer</code>类似，但<code>ScheduledThreadPoolExecutor</code>功能更强大、更灵活，<code>Timer</code>对应的是单个后台线程，而<code>ScheduledThreadPoolExecutor</code>可以在构造函数中指定多个对应的后台线程数。</p>
+<h3 id="FutureTask"><a href="#FutureTask" class="headerlink" title="FutureTask"></a>FutureTask</h3><p><code>Future</code>接口和实现<code>Future</code>接口的<code>FutureTask</code>类，代表异步计算的结果。<code>FutureTask</code>除了实现<code>Future</code>接口外，还实现了<code>Runnable</code>接口。可以把<code>FutureTask</code>交给<code>Executor</code>执行，也可以通过<code>submit()</code>方法返回一个<code>FutureTask</code>，然后执行<code>FutureTask.get()</code>方法。</p>
+<h2 id="线程池的使用"><a href="#线程池的使用" class="headerlink" title="线程池的使用"></a>线程池的使用</h2><h3 id="线程池的创建"><a href="#线程池的创建" class="headerlink" title="线程池的创建"></a>线程池的创建</h3><p>我们可以通过<code>ThreadPoolExecutor</code>来创建一个线程池：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, milliseconds,runnableTaskQueue, threadFactory,handler);</span><br></pre></td></tr></table></figure>
+<p>当提交一个任务到线程池时，线程池会创建一个线程来执行任务，即使其它空闲的基本线程能够执行新任务也会创建线程，等到需要执行的任务数大于线程池基本大小时就不再创建。</p>
+<h3 id="向线程池提交任务"><a href="#向线程池提交任务" class="headerlink" title="向线程池提交任务"></a>向线程池提交任务</h3><p>可以使用<code>execute()</code>方法提交任务，但是<code>execute()</code>方法没有返回值，所以无法判断任务是否被线程池执行成功。也可以使用<code>submit()</code>方法来提交任务，它会返回一个<code>future</code>，可以通过这个<code>future</code>的<code>get()</code>方法来获取返回值，<code>get()</code>方法会阻塞直到任务完成。</p>
+<h3 id="关闭线程池"><a href="#关闭线程池" class="headerlink" title="关闭线程池"></a>关闭线程池</h3><p>可以通过调用线程池的<code>shutdown()</code>或<code>shutdownNow()</code>方法来关闭线程池。</p>
+<ul>
+<li><code>shutdown()</code>先将线程池状态置为<code>SHUTDOWN</code>，停止接受外部提交的新任务，而等到正在执行的任务以及队列中等待的任务执行完才真正停止。</li>
+<li><code>shutdownNow()</code>先将线程池状态置为<code>STOP</code>，停止接受外部提交的新任务，忽略队列里等待的任务，使用<code>interrupt()</code>方法尝试将正在跑的任务中断，然后返回未执行的任务列表。</li>
+</ul>
+<p>注意，如果线程中没有<code>sleep</code>、<code>wait</code>、<code>Condition</code>等应用，<code>interrupt()</code>方法是无法中断当前的线程的。所以，<code>shutdownNow()</code>并不代表线程池一定立即就能退出，它也可能必须要等待所有正在执行的任务都执行完成了才能退出。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="http://ifeve.com/java-threadpool/" target="_blank" rel="noopener">聊聊并发（三）Java线程池的分析和使用</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/并发/"># 并发</a>
+                    
+                        <a href="/tags/Executor/"># Executor</a>
+                    
+                        <a href="/tags/线程池/"># 线程池</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/02/12/多线程断点续传下载器/">多线程断点续传下载器</a>
+            
+            
+            <a class="next" rel="next" href="/2019/02/10/Java中的并发工具类/">Java中的并发工具类</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

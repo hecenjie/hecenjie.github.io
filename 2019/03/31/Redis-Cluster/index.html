@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>Redis Cluster | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Redis Cluster</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">March 31, 2019&nbsp;&nbsp;13:21:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/Redis/">Redis</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="Redis-Cluster作用"><a href="#Redis-Cluster作用" class="headerlink" title="Redis Cluster作用"></a>Redis Cluster作用</h2><p>Redis Cluster是Redis 3.0开始引入的分布式存储方案，集群由多个节点组成，Redis的数据分布在这些节点中。集群中的节点分为主节点和从节点：只有主节点负责读写请求和集群信息的维护，从节点只进行主节点数据和状态信息的复制。集群的作用，可以归纳为两点：</p>
+<ul>
+<li>数据分片：集群将数据分散到多个节点，突破了Redis单机内存大小的限制，存储容量大大增加。</li>
+<li>高可用：集群支持主从复制和主节点的自动故障转移（与哨兵类似），当任一节点发生故障时，集群仍然可以对外提供服务。</li>
+</ul>
+<h2 id="数据分区方案"><a href="#数据分区方案" class="headerlink" title="数据分区方案"></a>数据分区方案</h2><p>常见的哈希分区方案包括：哈希取余分区、一致性哈希分区、带虚拟节点的一致性哈希分区等。</p>
+<ul>
+<li>哈希取余分区：哈希取余分区思路非常简单，首先计算key的hash值，然后对节点数量进行取余，从而决定数据映射到哪个节点上。该方案最大的问题是，当新增或删减节点时，节点数量发生变化，系统中所有的数据都需要重新计算映射关系，引发大规模数据迁移。</li>
+<li>一致性哈希分区：一致性哈希算法将整个哈希值空间组织成一个虚拟的圆环，范围为<code>0 ~ 2^32-1</code>。对于每个数据，根据key计算hash值，确定数据在环上的位置，然后从此位置沿环顺时针行走，找到的第一台服务器就是其应该映射到的服务器。与哈希取余分区相比，一致性哈希分区将增减节点的影响限制在相邻节点。<br><img src="http://blog.default.nanwulife.com/U%7BKC_N~EU%5DO%5B9_%7B3KK03U58.png" alt></li>
+<li>一致性哈希分区（虚拟节点机制）：普通的一致性哈希在服务器节点数量较少时容易产生数据倾斜问题，各个服务器的负载不均匀。为解决这个问题，引入了虚拟节点机制，每台机器可以负责更多节点，数据负担更加均匀。<br><img src="http://blog.default.nanwulife.com/Y90YE9D$%29CU%7B6AA%604QP~VEB.png" alt></li>
+<li>虚拟槽分区：Redis Cluser底层使用的虚拟槽分区，有一个长度为16384的虚拟槽，每个Master节点都会负责一部分的槽，Redis对key计算哈希值，使用的算法是CRC16，然后根据哈希值计算数据属于哪个槽，最后根据槽与节点的映射关系，计算数据属于哪个节点。其中哪个节点负责哪个槽，这是可以由用户指定的。<br><img src="http://blog.default.nanwulife.com/1174710-20181025213453407-302249562.png" alt></li>
+</ul>
+<h2 id="节点通信机制"><a href="#节点通信机制" class="headerlink" title="节点通信机制"></a>节点通信机制</h2><h3 id="两个端口"><a href="#两个端口" class="headerlink" title="两个端口"></a>两个端口</h3><p>在redis sentinel中，节点分为数据节点和sentinel节点：前者存储数据，后者实现额外的控制功能。在redis cluster中，没有数据节点与非数据节点之分，所有的节点都存储数据，也都参与集群状态的维护。为此，集群中的每个节点都提供了两个TCP端口，普通端口主要用于为客户端提供服务，集群端口用于节点之间的通信，如搭建集群、增减节点、故障转移等操作时节点间的通信。</p>
+<h3 id="Gossip协议"><a href="#Gossip协议" class="headerlink" title="Gossip协议"></a>Gossip协议</h3><p>Gossip过程是由种子节点发起，当一个种子节点有状态需要更新到网络中的其他节点时，它会随机的选择周围几个节点散播消息，收到消息的节点也会重复该过程，直至最终网络中所有的节点都收到了消息。这个过程可能需要一定的时间，由于不能保证某个时刻所有节点都收到消息，但是理论上最终所有节点都会收到消息，因此它是一个最终一致性协议。</p>
+<p><img src="http://blog.default.nanwulife.com/v2-575e785e7d03ad317e5bce4e36debb03_b.gif" alt></p>
+<p>Gossip协议的优点：</p>
+<ul>
+<li>负载低：比广播低，广播每条消息都要发送给所有节点，CPU、带宽等消耗较大。</li>
+<li>去中心化：Gossip协议不要求任何中心节点，所有节点都可以是对等的，任何一个节点无需知道整个网络状况，只要网络是连通的，任意一个节点就可以把消息散播到全网。</li>
+<li>容错性高：网络中任何节点的宕机和重启都不会影响Gossip消息的传播，Gossip协议具有天然的分布式系统容错特性。<br>Gossip协议的缺点：</li>
+<li>消息的延迟：由于节点只会随机向少数几个节点发送消息，消息最终是通过多个轮次的散播而到达全网的，因此使用Gossip协议会造成不可避免的消息延迟，不适合用在对实时性要求较高的场景下。</li>
+</ul>
+<h3 id="消息类型"><a href="#消息类型" class="headerlink" title="消息类型"></a>消息类型</h3><p>集群节点间发送的消息有以下几种类型：</p>
+<ul>
+<li>meet：在节点握手阶段，当节点收到客户端的<code>cluster meet</code>命令时，会向新加入的节点发送meet消息，请求新节点加入到当前集群，新节点收到meet消息后会回复一个pong消息。</li>
+<li>ping：集群里每个节点每秒钟会选择部分节点发送ping消息，接收者收到消息后会回复一个pong消息。ping消息使用Gossip协议发送，内容是自身节点和部分其他节点的状态信息，作用是彼此交换信息，以及检测节点是否在线。</li>
+<li>pong：pong消息封装了自身状态数据，可以分为两种：第一种是在接到meet/ping消息后回复的pong消息，第二种是指节点向集群广播pong消息，这样其他节点可以获知该节点的最新信息，例如故障恢复后新的主节点会广播pong消息。</li>
+<li>fail：当一个主节点判断另一个主节点客观下线后，会向集群广播这一fail消息，通知集群中所有节点标记故障节点为客观下线，并通知故障节点的从节点触发故障转移流程。</li>
+<li>publish：节点收到publish命令后，会先执行该命令，然后向集群广播这一消息，接收节点也会执行该publish命令。</li>
+</ul>
+<h2 id="客户端路由"><a href="#客户端路由" class="headerlink" title="客户端路由"></a>客户端路由</h2><h3 id="moved重定向"><a href="#moved重定向" class="headerlink" title="moved重定向"></a>moved重定向</h3><p>moved异常代表槽已经确认迁移至别的节点。</p>
+<p><img src="http://blog.default.nanwulife.com/1.png" alt><br><img src="http://blog.default.nanwulife.com/3.png" alt></p>
+<h3 id="ask重定向"><a href="#ask重定向" class="headerlink" title="ask重定向"></a>ask重定向</h3><p>在集群缩容扩容的时候，要对槽进行迁移，在迁移的过程中访问一个key，但是key已经迁移到目标节点，那么就会返回一个ask异常。</p>
+<p><img src="http://blog.default.nanwulife.com/6.png" alt></p>
+<h3 id="Smart-Client"><a href="#Smart-Client" class="headerlink" title="Smart Client"></a>Smart Client</h3><p>redis-cli这一类客户端称为Dummy客户端，因为它们在执行命令前不知道数据在哪个节点上，因此需要借助moved异常重定向。为了追求性能，我们不可能每次都随机访问一个节点，再根据moved或ask异常去重定向到目标节点，因此需要实现一个Smart客户端，比如说JedisCluster。JedisCluster的基本原理大致如下：</p>
+<ol>
+<li>从集群中选一个可运行节点，使用<code>cluster slots</code>命令并将结果映射到本地，这样本地就有了slot-&gt;node的映射关系缓存。</li>
+<li>JedisCluster为每个节点创建连接池(即JedisPool)。</li>
+<li>当执行命令时，JedisCluster根据key-&gt;slot-&gt;node选择需要连接的节点，发送命令。如果成功，则命令执行完毕。如果执行失败，则会随机选择其他节点进行重试，并在出现moved错误时，刷新本地的映射关系缓存。</li>
+</ol>
+<p>这里需要注意的是，JedisCluster中已经包含所有节点的连接池，因此JedisCluster要使用单例。</p>
+<h2 id="集群伸缩"><a href="#集群伸缩" class="headerlink" title="集群伸缩"></a>集群伸缩</h2><p>集群伸缩的核心是槽迁移，通过修改槽与节点的对应关系，实现槽（即数据）在节点之间的移动。例如，如果槽均匀分布在集群的3个节点中，此时增加一个节点，则需要从3个节点中分别拿出一部分槽给新节点，从而实现槽在4个节点中的均匀分布。</p>
+<h3 id="增加节点"><a href="#增加节点" class="headerlink" title="增加节点"></a>增加节点</h3><ol>
+<li>启动节点</li>
+<li>加入集群：使用<code>cluster meet</code>命令。</li>
+<li>迁移槽和数据</li>
+</ol>
+<h3 id="减少节点"><a href="#减少节点" class="headerlink" title="减少节点"></a>减少节点</h3><ol>
+<li>迁移槽和数据</li>
+<li>忘记节点：使用<code>cluster forget</code>命令</li>
+<li>关闭节点</li>
+</ol>
+<p>这里要注意应先下线从节点再下线主节点，因为若主节点先下线，会触发故障的自动转移。</p>
+<p>在槽迁移未完成时，客户端访问了负责该槽的节点，但key此时已经迁移到了别的节点下，这时候会返回ask异常，通过这个机制使得redis cluster可以无痛的完成扩缩容操作。</p>
+<h2 id="故障转移"><a href="#故障转移" class="headerlink" title="故障转移"></a>故障转移</h2><p>集群对故障发现与故障转移的实现与哨兵思路类似：通过定时任务发送ping消息检测其他节点状态，若某个主节点发现另一个主节点不可用（与参数<code>cluster-node-timeout</code>有关），则标记该节点进行主观下线，而当半数以上持有槽的主节点都标记该节点主观下线，则对该节点进行客观下线，并向集群广播fail消息，让集群中所有节点都将其标记为客观下线，并触发从节点的故障转移。</p>
+<p>在故障转移阶段，主要有以下几个步骤：</p>
+<ul>
+<li>检查资格：每个从节点都会检查与故障主节点的断线时间，如果超过默认值150s（<code>cluster-node-timeout * cluster-slave-validity-factor</code>）则会取消资格。</li>
+<li>准备选举时间：为了保证偏移量比较大的从节点更有可能成为主节点，会将该从节点的延迟时间设置更小一些。</li>
+<li>选举投票：从节点选举胜出需要的票数为N/2+1，其中N为主节点数量（包括故障主节点），但故障主节点实际上不能投票。因此为了能够在故障发生时顺利选出从节点，集群中至少需要3个主节点。</li>
+<li>替换主节点。</li>
+</ul>
+<p>与哨兵一样，集群只实现了主节点的故障转移，从节点故障时只会被下线，不会进行故障转移。因此，使用集群时，应谨慎使用读写分离技术，因为从节点故障会导致读服务不可用，可用性变差。</p>
+<h2 id="参数优化"><a href="#参数优化" class="headerlink" title="参数优化"></a>参数优化</h2><h3 id="cluster-node-timeout"><a href="#cluster-node-timeout" class="headerlink" title="cluster_node_timeout"></a>cluster_node_timeout</h3><p><code>cluster_node_timeout</code>的默认值是15s，影响包括：</p>
+<ul>
+<li>值越大对延迟容忍度越高，并且由于节点发现与其它节点最后通信时间超过<code>cluster_node_timeout / 2</code>时会直接发送ping消息，因此调大该参数还可以降低带宽消耗，但同时也会降低收敛速度。</li>
+<li>影响故障转移的判定和时间，值越大越不容易误判，但完成转移消耗时间越长。</li>
+</ul>
+<h3 id="cluster-require-full-coverage"><a href="#cluster-require-full-coverage" class="headerlink" title="cluster-require-full-coverage"></a>cluster-require-full-coverage</h3><p><code>cluster-require-full-coverage</code>参数设置为yes时，当主节点发生故障而故障转移尚未完成，原主节点中的槽不在任何节点中，此时集群会处于下线状态，无法响应客户端的请求。但在实际应用中为了保证服务的高可用性，都会将该参数设置为no。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>《Redis开发与运维》</li>
+<li><a href="http://duqingfeng.net/2018/06/12/%E5%93%88%E5%B8%8C%E5%88%86%E5%8C%BA%E6%8A%80%E6%9C%AF%E4%B9%8B%E9%97%B4%E7%9A%84%E5%AF%B9%E6%AF%94%EF%BC%88%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C%E3%80%81Redis%20cluster%E8%99%9A%E6%8B%9F%E6%A7%BD%EF%BC%89/" target="_blank" rel="noopener">哈希分区技术之间的对比（一致性哈希、Redis cluster虚拟槽）</a></li>
+<li><a href="https://www.cnblogs.com/kismetv/p/9853040.html" target="_blank" rel="noopener">深入学习Redis（5）：集群</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/41228196" target="_blank" rel="noopener">P2P 网络核心技术：Gossip 协议</a></li>
+<li><a href="https://enpsl.top/2019/01/24/2019-01-24-redis-cluster-route/" target="_blank" rel="noopener">Redis cluster 客户端路由</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/Redis/"># Redis</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/03/31/Redis缓存设计与优化/">Redis缓存设计与优化</a>
+            
+            
+            <a class="next" rel="next" href="/2019/03/31/Zookeeper集群节点为什么推荐为奇数/">Zookeeper集群节点为什么推荐为奇数</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

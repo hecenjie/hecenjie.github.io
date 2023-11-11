@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>操作系统原理-死锁 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">操作系统原理-死锁</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">January 28, 2019&nbsp;&nbsp;18:48:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/操作系统/">操作系统</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="死锁的定义"><a href="#死锁的定义" class="headerlink" title="死锁的定义"></a>死锁的定义</h2><p>一组进程中，每个进程都无限等待被该组进程中另一进程所占有的资源，因而永远无法得到的资源，这种现象称为进程死锁，这一组进程就称为死锁进程。</p>
+<a id="more"></a>
+<h2 id="死锁与活锁的区别"><a href="#死锁与活锁的区别" class="headerlink" title="死锁与活锁的区别"></a>死锁与活锁的区别</h2><p>活锁指的是一组进程既无进展也没有阻塞 ，由于某些条件没有满足，导致一直重复尝试并失败。例如错误地使用Pertonson算法：</p>
+<p><img src="http://img.hecenjie.cn/EOSY6EMJT9MKNS1AL88.png" alt="活锁"></p>
+<h2 id="产生死锁的必要条件"><a href="#产生死锁的必要条件" class="headerlink" title="产生死锁的必要条件"></a>产生死锁的必要条件</h2><ul>
+<li>互斥使用（资源独占）：一个资源每次只能给一个进程使用。</li>
+<li>占有且等待（请求和保持）：进程在申请新的资源的同时保持对原有资源的占有。</li>
+<li>不可抢占：资源申请者不能强行的从资源占有者手中夺取资源，资源只能由占有者自愿释放。</li>
+<li>循环等待：有两个或者两个以上的进程组成一条环路，该环路中的每个进程都在等待下一个进程所占有的资源。</li>
+</ul>
+<h2 id="资源分配图"><a href="#资源分配图" class="headerlink" title="资源分配图"></a>资源分配图</h2><p>系统由若干类资源构成，一类资源称为一个资源类；每个资源类中包含若干个同种资源，称为资源实例。用方框表示资源类，用方框中的黑圆点表示资源实例，用圆圈中加进程名表示进程。如果资源分配图中没有环路，则系统中没有死锁， 如果图中存在环路则系统中可能存在死锁。</p>
+<p><img src="http://img.hecenjie.cn/NZXIGJJX_ST86ZZU.png" alt="RAG"></p>
+<h3 id="资源分配图化简"><a href="#资源分配图化简" class="headerlink" title="资源分配图化简"></a>资源分配图化简</h3><ol>
+<li>找一个非孤立、且只有分配边的进程结点，去掉分配边，将其变为孤立结点。</li>
+<li>再把相应的资源分配给一个等待该资源的进程，即将该进程的申请边变为分配边。</li>
+</ol>
+<p>如果一个图可完全化简（所有的资源和进程都变成孤立的点），则不会产生死锁；如果一个图不可完全化简（即图中还有边存在），则会产生死锁。</p>
+<h2 id="死锁预防"><a href="#死锁预防" class="headerlink" title="死锁预防"></a>死锁预防</h2><p>防止产生死锁的四个必要条件中任何一个条件发生，以此排除发生死锁的可能性。</p>
+<h3 id="破坏“互斥使用”条件"><a href="#破坏“互斥使用”条件" class="headerlink" title="破坏“互斥使用”条件"></a>破坏“互斥使用”条件</h3><p>把独占资源变为共享资源。例如在SPOOLing系统中，实际上并没有为任何进程分配这台打印机，而只是在输入井和输出井中，为进程分配一存储区和建立一章I/O请求表。这样，便把独占设备改造为共享设备。</p>
+<h3 id="破坏“占有且等待”条件"><a href="#破坏“占有且等待”条件" class="headerlink" title="破坏“占有且等待”条件"></a>破坏“占有且等待”条件</h3><p>实现方案一：要求每个进程在运行前必须一次性申请它所要求的所有资源，且仅当该进程所要资源均可满足时才给予一次性分配。</p>
+<p>实现方案二：在允许进程动态申请资源前提下规定，一个进程在申请新的资源不能立即得到满足而变为等待状态之前，必须释放已占有的全部资 源，若需要再重新申请。 </p>
+<h3 id="破坏“不可抢占”条件"><a href="#破坏“不可抢占”条件" class="headerlink" title="破坏“不可抢占”条件"></a>破坏“不可抢占”条件</h3><p>当一个进程申请的资源被其他进程占用时，可以通过操作系统抢占这一资源(两个进程优先级不同) 。</p>
+<h3 id="破坏“循环等待”条件"><a href="#破坏“循环等待”条件" class="headerlink" title="破坏“循环等待”条件"></a>破坏“循环等待”条件</h3><p>通过定义资源类型的线性顺序实现。</p>
+<p>把系统中所有资源编号，进程在申请资源时必须严格按资源编号的递增次序进行，否则操作系统不予分配。 </p>
+<h2 id="死锁避免"><a href="#死锁避免" class="headerlink" title="死锁避免"></a>死锁避免</h2><p>在系统运行过程中，对进程发出的每一个系统能够满足的资源申请进行动态检查，并根据检查结果决定是否分配资源，若分配后系统发生死锁或可能发生死锁，则不予分配，否则予以分配。</p>
+<h3 id="安全状态"><a href="#安全状态" class="headerlink" title="安全状态"></a>安全状态</h3><p>如果没有死锁发生，并且即使所有进程突然请求对资源的最大需求，也仍然存在某种调度次序能够使得每一个进程运行完毕，则称该状态是安全的。</p>
+<p><img src="http://img.hecenjie.cn/ed523051-608f-4c3f-b343-383e2d194470.png" alt="安全状态"></p>
+<p>例如，图a的第二列Has表示已拥有的资源数，第三列Max表示总共需要的资源数，Free表示还有可以使用的资源数。从图a开始出发，先让B拥有所需的所有资源（图b），运行结束后释放B，此时Free变为5（图c）；接着以同样的方式运行C和A，使得所有进程都能成功运行，因此可以称图a所示的状态时安全的。</p>
+<h2 id="单个资源的银行家算法"><a href="#单个资源的银行家算法" class="headerlink" title="单个资源的银行家算法"></a>单个资源的银行家算法</h2><p>一个小城镇的银行家，他向一群客户分别承诺了一定的贷款额度，算法要做的是判断对请求的满足是否会进入不安全状态，如果是，就拒绝请求；否则予以分配。</p>
+<p><img src="http://img.hecenjie.cn/d160ec2e-cfe2-4640-bda7-62f53e58b8c0.png" alt="bank"></p>
+<p>由图可知，状态b进入状态c是进入了一个不安全的状态，因此恢复原来状态，避免了进入不安全状态。</p>
+<h2 id="多个资源的银行家算法"><a href="#多个资源的银行家算法" class="headerlink" title="多个资源的银行家算法"></a>多个资源的银行家算法</h2><p>上图中有五个进程，四个资源。左边的图表示已经分配的资源，右边的图表示还需要分配的资源。最右边的E、P以及A分别表示：总资源、已分配资源以及可用资源。</p>
+<p>检查一个状态是否安全的算法如下：</p>
+<ol>
+<li>查找右边的矩阵是否存在一行小于等于向量A。如果不存在这样的行，那么系统将会发生死锁，状态是不安全的。</li>
+<li>假若找到这样一行，将该进程标记为终止，并将其已分配资源加到A 中。</li>
+<li>重复以上两步，直到所有进程都标记为终止，则状态是安全的。</li>
+</ol>
+<p>如果一个状态不是安全的，需要拒绝进入这个状态。</p>
+<p><img src="http://img.hecenjie.cn/62e0dd4f-44c3-43ee-bb6e-fedb9e068519.png" alt="bank"></p>
+<h2 id="死锁检测与解除"><a href="#死锁检测与解除" class="headerlink" title="死锁检测与解除"></a>死锁检测与解除</h2><p>允许死锁发生，但是操作系统会不断监视系统进展情况，判断死锁是否真的发生，一旦死锁发生则采取专门的措施，解除死锁并以最小的代价恢复操作系统运行。</p>
+<h3 id="死锁的检测"><a href="#死锁的检测" class="headerlink" title="死锁的检测"></a>死锁的检测</h3><p>死锁的检测与银行家算法几乎一样，此处不再阐述。</p>
+<h3 id="死锁的解除"><a href="#死锁的解除" class="headerlink" title="死锁的解除"></a>死锁的解除</h3><ul>
+<li>利用抢占恢复</li>
+<li>利用回滚恢复</li>
+<li>通过杀死进程恢复</li>
+</ul>
+<h2 id="鸵鸟算法"><a href="#鸵鸟算法" class="headerlink" title="鸵鸟算法"></a>鸵鸟算法</h2><p>把头埋在沙子里，假装根本没发生问题。</p>
+<p>因为解决死锁问题的代价很高，因此鸵鸟策略这种不采取任务措施的方案会获得更高的性能。当发生死锁时不会对用户造成多大影响，或发生死锁的概率很低，可以采用鸵鸟策略。</p>
+<h2 id="哲学家就餐问题"><a href="#哲学家就餐问题" class="headerlink" title="哲学家就餐问题"></a>哲学家就餐问题</h2><p>五个哲学家围着一张圆桌，每个哲学家面前放着食物。哲学家的生活有两种交替活动：吃饭以及思考。当一个哲学家吃饭时，需要先拿起自己左右两边的两根筷子，并且一次只能拿起一根筷子。</p>
+<p><img src="http://img.hecenjie.cn/a9077f06-7584-4f2b-8c20-3a8e46928820.jpg" alt="哲学家就餐问题"></p>
+<p>下面是一种错误的解法，考虑到如果所有哲学家同时拿起左手边的筷子，那么就无法拿起右手边的筷子，造成死锁。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N 5</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">philosopher</span><span class="params">(<span class="keyword">int</span> i)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span>(<span class="literal">true</span>) &#123;</span><br><span class="line">        think();</span><br><span class="line">        take(i);       <span class="comment">// 拿起左边的筷子</span></span><br><span class="line">        take((i+<span class="number">1</span>)%N); <span class="comment">// 拿起右边的筷子</span></span><br><span class="line">        eat();</span><br><span class="line">        put(i);</span><br><span class="line">        put((i+<span class="number">1</span>)%N);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>为了防止死锁的发生，有以下几种解法：</p>
+<ul>
+<li>仅当一个哲学家左右两边的筷子都可用时，才允许他拿筷子。</li>
+<li>最多允许4个哲学家同时坐在桌子周围。</li>
+<li>规定奇数号哲学家先拿左筷子再拿右筷子，而偶数号哲学家相反。</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>Tanenbaum A S, Bos H. Modern operating systems[M]. Prentice Hall Press, 2014.</li>
+<li><a href="https://www.coursera.org/learn/os-pku/home/welcome" target="_blank" rel="noopener">北京大学操作系统原理（Operating Systems）</a></li>
+<li><a href="https://github.com/CyC2018/CS-Notes/blob/master/notes/%E8%AE%A1%E7%AE%97%E6%9C%BA%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F.md#%E4%B8%80%E6%A6%82%E8%BF%B0" target="_blank" rel="noopener">计算机操作系统</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/操作系统/"># 操作系统</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/01/28/深入理解JVM-内存模型/">深入理解JVM-内存模型</a>
+            
+            
+            <a class="next" rel="next" href="/2019/01/28/操作系统原理-文件系统/">操作系统原理-文件系统</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

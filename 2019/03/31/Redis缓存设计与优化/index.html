@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>Redis缓存设计与优化 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Redis缓存设计与优化</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">March 31, 2019&nbsp;&nbsp;20:28:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/Redis/">Redis</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="过期策略"><a href="#过期策略" class="headerlink" title="过期策略"></a>过期策略</h2><p>Redis过期策略是：定期删除+惰性删除。</p>
+<p>所谓定期删除，指的是Redis默认每隔100ms就随机抽取一些设置了过期时间的key（全部都检查的话十分消耗CPU资源），检查其是否过期，如果过期了就删除。但仅依赖此策略会有许多过期的key未被检查到，因此Redis还使用惰性删除策略，即在读/写key的时候再检查其是否过期，如果过期了则删除。</p>
+<h2 id="内存淘汰机制"><a href="#内存淘汰机制" class="headerlink" title="内存淘汰机制"></a>内存淘汰机制</h2><p>如果某些key没有被定期删除，也没及时去读/写以触发惰性删除，那么Redis的内存会越来越高，当已用内存超过<code>maxmemory</code>限定时，就会根据内存淘汰机制删除部分key。Redis内存淘汰机制有以下几个：</p>
+<ul>
+<li>noeviction: 当内存不足以容纳新写入数据时，新写入操作会报错。</li>
+<li>allkeys-lru：当内存不足以容纳新写入数据时，在键空间中，移除最近最少使用的key。</li>
+<li>allkeys-random：当内存不足以容纳新写入数据时，在键空间中，随机移除某个key。</li>
+<li>volatile-lru：当内存不足以容纳新写入数据时，在设置了过期时间的键空间中，移除最近最少使用的key。</li>
+<li>volatile-random：当内存不足以容纳新写入数据时，在设置了过期时间的键空间中，随机移除某个key。</li>
+<li>volatile-ttl：当内存不足以容纳新写入数据时，在设置了过期时间的键空间中，有更早过期时间的key优先移除。</li>
+</ul>
+<h2 id="缓存穿透"><a href="#缓存穿透" class="headerlink" title="缓存穿透"></a>缓存穿透</h2><p>一般的缓存系统，都是根据key去缓存查询，如果不存在对应的value，就应该去数据库查找。如果key对应的value是一定不存在的，并且对该key并发请求量很大，就会对数据库造成很大的压力，这就叫做缓存穿透。</p>
+<p>第一个解决办法是对查询结果为空的键也进行缓存，由于这种方式需要更多的键，所以可以设置一个短一点的过期时间。</p>
+<p>第二个解决方案则是使用布隆过滤器拦截。布隆过滤器的原理是，当一个元素被加入集合时，通过K个Hash函数将这个元素映射成一个位数组中的K个点，并把它们置为1。检索时，我们只要看看这些点是不是都是1就（大约）知道集合中有没有它了：如果这些点有任何一个0，则被检元素一定不在；如果都是1，则被检元素有可能在。</p>
+<p><img src="http://blog.default.nanwulife.com/booleanfilter.png" alt></p>
+<p>通过布隆过滤器，一个一定不存在的数据会被它拦截掉，从而避免了对数据库的查询压力。</p>
+<h2 id="缓存雪崩"><a href="#缓存雪崩" class="headerlink" title="缓存雪崩"></a>缓存雪崩</h2><p>当缓存服务器重启或者大量缓存集中在某一个时间段失效，这样在失效的时候，所有请求都会查询数据库，也会给数据库带来很大压力，这就叫做缓存雪崩。对于缓存雪崩有以下几种解决方案：</p>
+<ul>
+<li>可以给缓存设置过期时间时加上一个随机时间，使得每个key的过期时间分散开来，不会集中在同一时刻失效。</li>
+<li>进行缓存预热，避免在系统刚启动不久由于还未将大量数据进行缓存而导致缓存雪崩。</li>
+<li>使用分布式缓存。</li>
+<li>提前演练。</li>
+</ul>
+<h2 id="热点key重建"><a href="#热点key重建" class="headerlink" title="热点key重建"></a>热点key重建</h2><p>当前key是一个热点key（比如说某个热门的娱乐新闻），如果在缓存失效时有大量线程并发请求，那么这些线程会同时去访问数据库并重建key，导致后端系统负载过大，甚至因此崩溃。</p>
+<p><img src="http://blog.default.nanwulife.com/1115933-20180629202036949-8223995.png" alt></p>
+<p>为此有以下几种解决方案：</p>
+<h3 id="互斥锁"><a href="#互斥锁" class="headerlink" title="互斥锁"></a>互斥锁</h3><p>可以使用互斥锁的方式实现，直接利用redis的<code>set</code>命令即可（如<code>SET mutexKey &quot;1&quot; EX 10086 NX</code>），为了防止该锁未被正确释放，还应给该锁设置一个过期时间。</p>
+<p><img src="http://blog.default.nanwulife.com/1115933-20180703003410961-1677269917.png" alt></p>
+<p>这种方式的缺点在于重建的过程中别的线程都会处于等待状态，整体性能不高。</p>
+<h3 id="永远不过期"><a href="#永远不过期" class="headerlink" title="永远不过期"></a>永远不过期</h3><p>我们不为每个key设置一个过期时间，但会添加一个逻辑过期时间属性，每次去读的时候都判断一下当前时间是否已经大于逻辑过期时间，如果是的话就使用单独的线程去构建缓存。</p>
+<p><img src="http://blog.default.nanwulife.com/1115933-20180703004145474-1329843618.png" alt></p>
+<p>这种方式的缺点在于缓存的构建是异步的，因此别的线程在这个过程中依然会取到老值，不保证数据的一致性。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>《Redis开发与运维》</li>
+<li><a href="http://www.cnblogs.com/fidelQuan/p/4543387.html" target="_blank" rel="noopener">缓存穿透与缓存雪崩</a></li>
+<li><a href="https://blog.csdn.net/fouy_yun/article/details/81075432" target="_blank" rel="noopener">分布式缓存击穿（布隆过滤器 Bloom Filter）</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/Redis/"># Redis</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/04/20/String源码分析/">String源码分析</a>
+            
+            
+            <a class="next" rel="next" href="/2019/03/31/Redis-Cluster/">Redis Cluster</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

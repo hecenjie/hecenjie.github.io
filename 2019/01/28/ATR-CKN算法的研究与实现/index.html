@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>ATR-CKN算法的研究与实现 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">ATR-CKN算法的研究与实现</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">January 28, 2019&nbsp;&nbsp;18:55:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/项目/">项目</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>最近在学校做了无线传感器网络（WSN）睡眠调度算法方面的一些研究，本篇文章主要对其中的CKN、EC-CKN算法的学习做个总结，并给出基于这两种算法而改进后的ATR-CKN算法的核心实现以及在Nettopo上的运行结果。</p>
+<a id="more"></a>
+<h1 id="CKN与EC-CKN算法"><a href="#CKN与EC-CKN算法" class="headerlink" title="CKN与EC-CKN算法"></a>CKN与EC-CKN算法</h1><p>K-邻居节点连通算法（CKN）是一个有效的分布式睡眠/工作时序安排算法。该算法可以在有效的减少网络中处于工作状态的节点个数的同时保证整个网络处于连通状态和需求的路径延迟。执行CKN算法时对WSN中的每个节点u主要进行以下几步：</p>
+<p><img src="http://img.hecenjie.cn/O4%2909EVPSRXAY6%292S%60KRG$6.png" alt></p>
+<p>针对CKN算法在能量消耗方面存在的问题，基于能量消耗的睡眠/工作时序安排算法（EC-CKN）可以延长网络的寿命。EC-CKN算法利用节点当前的剩余能量信息作为参数来决定节点是否进入睡眠状态。EC-CKN算法不仅可以保证整个网络处于K邻居节点连通状态，同时还可以保证每个节点处于工作状态的K个邻居节点当前的剩余能量在所有邻居节点当前剩余能量排序中为最大的K个。</p>
+<h1 id="存在的问题"><a href="#存在的问题" class="headerlink" title="存在的问题"></a>存在的问题</h1><p>EC-CKN对CKN有了一定的改进，但在某些场景下仍然会存在一些问题，例如下文将介绍的死亡加速与网络隔离。</p>
+<h3 id="死亡加速"><a href="#死亡加速" class="headerlink" title="死亡加速"></a>死亡加速</h3><p>在下图的场景中，节点B有很多个邻居节点，按理是可以进入睡眠状态的，但是由于它的其中一个邻居节点A只有它一个邻居节点，因此节点A和B永远得不到睡眠机会，这导致的后果就是：节点B的能量很快就被消耗完了，而节点B周围原本刚好满足睡眠条件的节点由于少了一个醒着的邻居节点，睡眠的几率也因此下降，从而加速了整个网络的死亡。</p>
+<p><img src="http://img.hecenjie.cn/RD$XNFLW@%29JC%28IHG1MGZC5A.png" alt></p>
+<h3 id="网络隔离"><a href="#网络隔离" class="headerlink" title="网络隔离"></a>网络隔离</h3><p>类似于死亡加速，在下面的场景中节点A和B永远也得不到睡眠机会，因此会更快的消耗完能量，导致相连的两个网络被隔离开了。</p>
+<p><img src="http://img.hecenjie.cn/OR%5BQ%258%7D%28NFA%7B6AC2H%60UWGI8.png" alt></p>
+<h1 id="ATR-CKN算法"><a href="#ATR-CKN算法" class="headerlink" title="ATR-CKN算法"></a>ATR-CKN算法</h1><p>ATR-CKN算法优于原始的基于CKN的睡眠调度算法，它的优势在于可以在物理上调整传感器节点的传输半径，从而执行CKN使部分节点进入睡眠状态。ATR-CKN算法在继承了EC-CKN算法的所有主要属性的同时，通过提高节点的睡眠率为延长网络生命周期做出了重要贡献。</p>
+<p>相较于EC-CKN，ATR-CKN只用在之前加入一个判断逻辑即可：</p>
+<p><img src="http://img.hecenjie.cn/NPPLT2L4@3%60S%29XLEQJDGU3H.png" alt></p>
+<h3 id="核心实现"><a href="#核心实现" class="headerlink" title="核心实现"></a>核心实现</h3><p>下面给出在Nettopo上对于ATR-CKN算法的实现，其关键在于执行EC-CKN之前加入下面一段判断逻辑：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">ATRCKN_Function</span><span class="params">()</span> </span>&#123;</span><br><span class="line"><span class="comment">//...</span></span><br><span class="line">		<span class="keyword">boolean</span> flag = <span class="keyword">false</span>;</span><br><span class="line">		Integer[] neighbors1 = neighbors.get(currentID);</span><br><span class="line">		<span class="keyword">if</span>(neighbors1.length &lt; k) &#123;</span><br><span class="line">			<span class="keyword">while</span>(!isUsingMaxTR(currentID)) &#123;</span><br><span class="line">				increaseTR(currentID);</span><br><span class="line">				neighbors1 = neighbors.get(currentID);</span><br><span class="line">				<span class="keyword">if</span>(neighbors1.length &gt;= k) &#123;</span><br><span class="line">					<span class="keyword">for</span>(<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; neighbors1.length; j++) &#123;</span><br><span class="line">						<span class="keyword">int</span> tr = ((SensorNode)wsn.getNodeByID(currentID)).getMaxTR();</span><br><span class="line">						((SensorNode)wsn.getNodeByID(neighbors1[j])).setMaxTR(tr);</span><br><span class="line">					&#125;</span><br><span class="line">					flag = <span class="keyword">true</span>;</span><br><span class="line">					<span class="keyword">break</span>;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">if</span>(!flag) setDefaultTR(currentID);</span><br><span class="line">		&#125;</span><br><span class="line">	<span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h3><p>下面将在Nettopo上简单的演示一遍ATR-CKN算法对于死亡加速问题的解决。</p>
+<p>k = 2，round = 1的时候：<br><img src="http://blog.algorithms.nanwulife.com/WF8I%7DDDLHR%5B~GZ2FN1G@%7B4X.png" alt></p>
+<p>k = 2，round = 10的时候：<br><img src="http://blog.algorithms.nanwulife.com/%5DJN~%25%5BM%7B%60PKGKFT%25E4C%5B6~3.png" alt></p>
+<p>k = 2，round = 30的时候<br><img src="http://blog.algorithms.nanwulife.com/6%5DJL%5D4DFM0KGSFZJQ0~L%7DGV.png" alt></p>
+<p>k = 2，round = 43的时候：<br><img src="http://blog.algorithms.nanwulife.com/J%29%5DD7AQY%28%28%7B55YTRV%5DZE4MQ.png" alt></p>
+<p>由于增大了传感器节点的物理传输半径，可以看到两个关键节点都可以进入睡眠状态，以此延长了网络的整体寿命。虽然增大传输半径的同时也增加了能量消耗，但在进行了大量实验并对统计数据进行详细分析后，我们可以发现ATR-CKN的生命周期相比EC-CKN平均增加了19％，最大增加了41%，因此可以得出其更优于EC-CKN的结论。</p>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/WSN/"># WSN</a>
+                    
+                        <a href="/tags/算法/"># 算法</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/01/28/初级排序算法/">初级排序算法</a>
+            
+            
+            <a class="next" rel="next" href="/2019/01/28/深入理解JVM-垃圾收集与内存分配/">深入理解JVM-垃圾收集与内存分配</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

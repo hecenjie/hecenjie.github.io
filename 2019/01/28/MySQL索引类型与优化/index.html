@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>MySQL索引类型与优化 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">MySQL索引类型与优化</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">January 28, 2019&nbsp;&nbsp;22:32:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/数据库/">数据库</a>
+                            
+                                <a href="/categories/数据库/MySQL/">MySQL</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h1 id="索引的优点"><a href="#索引的优点" class="headerlink" title="索引的优点"></a>索引的优点</h1><ul>
+<li>索引大大减少了服务器需要扫描的数据量</li>
+<li>索引可以帮助服务器避免排序、分组和临时表（临时表主要是在排序和分组过程中创建，因为不需要排序和分组，也就不需要创建临时表）</li>
+<li>索引可以将随机I/O变为顺序I/O（<code>B-Tree</code>索引是有序的，会将相邻的数据都存储在一起）</li>
+</ul>
+<a id="more"></a>
+<h1 id="索引的类型"><a href="#索引的类型" class="headerlink" title="索引的类型"></a>索引的类型</h1><p>在MySQL中，索引是在存储引擎层而不是服务器层实现的，所以不同的存储引擎的索引类型和实现不同。</p>
+<h2 id="B-Tree索引"><a href="#B-Tree索引" class="headerlink" title="B-Tree索引"></a>B-Tree索引</h2><p>大多数存储引擎都使用<code>B-Tree</code>作为默认索引类型，但实际在技术上往往使用的是<code>B+Tree</code>，例如InnoDB。<code>B-Tree</code>索引之能够加快访问数据的速度，是因为存储引擎不再需要进行全表扫描来获取需要的数据，取而代之的是从索引的根节点开始进行搜索。关于<code>B-Tree</code>和<code>B+Tree</code>的工作原理可以参考之前的一篇笔记：<a href="https://blog.csdn.net/qq_38283262/article/details/84330111" target="_blank" rel="noopener">常用查找算法之B/B+树</a>。</p>
+<p><code>B-Tree</code>索引适用于全键值、键值范围或键前缀（最左前缀）查找。因为索引树中的节点是有序的，所以除了按值查找之外，索引还可以用于查询中的<code>ORDER BY</code>操作。</p>
+<p><code>B-Tree</code>同样也有一些限制：</p>
+<ul>
+<li>如果不是按照索引的最左列开始查找，则无法使用索引。</li>
+<li>不能跳过索引中的列，否则只会使用跳过之前的索引列。</li>
+<li>如果查询中有某个列的范围查询，则其右边所有列都无法使用索引优化查找。</li>
+</ul>
+<h2 id="哈希索引"><a href="#哈希索引" class="headerlink" title="哈希索引"></a>哈希索引</h2><p>哈希索引基于哈希表实现，对于每一行数据，存储引擎都会对所有索引列计算一个哈希码并存储在索引中，同时在哈希表中保存指向每个数据行的指针。如果多个列的哈希值相同，索引会以链表的方式存放多个记录指针到同一个哈希条目中。哈希索引有如下限制：</p>
+<ul>
+<li>哈希索引只包含哈希值和行指针，而不存储字段值，所以不能使用索引中的值来避免读取行。</li>
+<li>无法用于排序。</li>
+<li>不支持部分索引列匹配查找。</li>
+<li>不支持范围查询。</li>
+<li>哈希冲突。</li>
+</ul>
+<p>InnoDB引擎有一个特殊的功能叫做“自适应哈希索引”，当InnoDB注意到某些索引值被使用得非常频繁时，它会在内存中基于<code>B-Tree</code>索引之上再创建一个哈希索引，这样就让<code>B+Tree</code>索引具有哈希索引的一些优点，比如快速的哈希查找。</p>
+<h2 id="全文索引"><a href="#全文索引" class="headerlink" title="全文索引"></a>全文索引</h2><p>全文索引是一种特殊类型的索引，它查找的是文本中的关键词，而不是直接比较索引中的值。全文索引使用倒排索引实现，它记录着关键词到其所在文档的映射。在相同的列上同时创建全文索引和基于值的<code>B-Tree</code>索引不会有冲突，全文索引适用于<code>MATCH AGAINST</code>操作，而不是普通的<code>WHERE</code>条件操作。</p>
+<h2 id="空间数据索引"><a href="#空间数据索引" class="headerlink" title="空间数据索引"></a>空间数据索引</h2><p>MyISAM存储引擎支持空间数据索引（R-Tree），可以用作地理数据存储。空间索引会从所有维度来索引数据，查询时可以有效利用任意维度来组合查询。必须使用MySQL的GIS相关函数来维护数据。</p>
+<h1 id="索引优化"><a href="#索引优化" class="headerlink" title="索引优化"></a>索引优化</h1><h2 id="独立的列"><a href="#独立的列" class="headerlink" title="独立的列"></a>独立的列</h2><p>在进行查询时，索引列不能是表达式的一部分，也不能是函数的参数，否则MySQL无法使用索引。</p>
+<p>例如：<code>SELECT actor_id FROM sakila.actor WHERE actor_id + 1 = 5;</code></p>
+<h2 id="多列索引"><a href="#多列索引" class="headerlink" title="多列索引"></a>多列索引</h2><p>在需要使用多个列作为条件进行查询时，使用多列索引比使用多个单列索引性能更好。例如下面的语句中，最好把<code>actor_id</code>和<code>film_id</code>设置为多列索引：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> film_id, actor_id <span class="keyword">FROM</span> sakila.film_actor</span><br><span class="line"><span class="keyword">WHERE</span> actor_id = <span class="number">1</span> <span class="keyword">AND</span> film_id = <span class="number">1</span>;</span><br></pre></td></tr></table></figure>
+<h2 id="索引列的顺序"><a href="#索引列的顺序" class="headerlink" title="索引列的顺序"></a>索引列的顺序</h2><p>将选择性最强的索引列放在前面。索引的选择性是指不重复的索引值（基数）和记录总数的比值，选择性越高则查询效率也越高，因为选择性高的索引可以让MySQL在查找时过滤掉更多的行。</p>
+<h2 id="前缀索引"><a href="#前缀索引" class="headerlink" title="前缀索引"></a>前缀索引</h2><p>对于很长的字符串可以索引开始的部分字符，使得前缀的选择性接近于完整列的选择性。</p>
+<h2 id="聚簇索引"><a href="#聚簇索引" class="headerlink" title="聚簇索引"></a>聚簇索引</h2><p><code>B-Tree</code>索引类型都可以用在MyISAM和InnoDB上，但InnoDB有聚簇索引的特性而MyISAM没有。</p>
+<p>聚簇表示数据行和相邻的键值紧凑地存储在一起，因为无法同时把数据行存放在两个不同的地方，所以每张Innodb引擎表都只有一个聚簇索引。一般情况，聚簇索引就是主键索引（因为聚簇索引在有主键的情况下，默认指定主键为聚簇索引），而非聚簇索引都是二级索引。</p>
+<p>如果没有定义主键，InnoDB会选择一个唯一的非空索引代替。如果没有这样的索引，InnoDB会隐式定义一个主键来作为聚簇索引。采用聚簇索引，索引和其他列值存储在一起，因此数据访问比采用非聚簇索引（如MyISAM引擎）更快，节省了磁盘I/O资源。</p>
+<p>二级索引叶子节点保存的不是指向行的物理位置的指针，而是行的主键值。通过二级索引查找行，存储引擎需要找到二级索引的叶子节点获得对应的主键值，然后根据这个值去聚簇索引中查找到对应的行。这样虽然会让二级索引占用更多的空间，但换来的好处是InnoDB在移动行时减少了二级索引的维护工作。</p>
+<p>MyISAM没有聚簇索引的特性，主键索引和其它索引在结构上没有什么不同。</p>
+<p><img src="http://blog.default.nanwulife.com/cluster.jpg" alt></p>
+<p>使用InnoDB存储引擎时应该尽可能地按主键顺序插入数据（可以使用<code>AUTO_INCREMENT</code>自增），最好避免随机的插入（例如使用UUID作为主键）。因为当主键的值是顺序的时，InnoDB会把每一条记录都存储在上一条记录的后面，当达到页的最大填充因子时（默认为15/16），下一条记录就会写入新的页中。而每次插入主键的值近似于随机时，新纪录根据值的大小要被插入到现有索引页的中间某个合适位置，此时页分裂会导致大量的数据移动并产生碎片，甚至目标页面可能已经被回写到磁盘上而从缓存中清掉，此时又要从磁盘上读回来，这增加了很多开销。</p>
+<h2 id="覆盖索引"><a href="#覆盖索引" class="headerlink" title="覆盖索引"></a>覆盖索引</h2><p>如果一个索引包含（或者说覆盖）所有需要查询的字段的值，我们就称之为“覆盖索引”，此时不需要回表操作。其具有以下优点：</p>
+<ul>
+<li>索引条目通常远小于数据行大小，所以如果只需要读取索引，那MySQL就会极大地减少数据访问量。</li>
+<li>因为索引是按照列值顺序存储的，所以对于I/O密集型的范围查询会比随机从磁盘读取每一行数据的I/O要少得多。</li>
+<li>一些存储引擎如MyISAM在内存中只缓存索引，数据则依赖于操作系统来缓存，因此要访问数据需要一次系统调用，比较费时。</li>
+<li>对于InnoDB引擎，若二级索引能够覆盖查询，则可以避免对主键索引的二次查询。</li>
+</ul>
+<h2 id="使用索引扫描来排序"><a href="#使用索引扫描来排序" class="headerlink" title="使用索引扫描来排序"></a>使用索引扫描来排序</h2><p>MySQL有两种方式可以生成有序的结果：通过排序操作或者按索引顺序扫描。如果<code>EXPLAIN</code>出来的<code>type</code>列的值为<code>index</code>，则说明MySQL使用了索引扫描来做排序。</p>
+<p>只有当索引的列顺序和<code>ORDER BY</code>子句的顺序完全一致，并且所有列的排序方向（倒序或正序）都一样时，MySQL才能够使用索引来对结果做排序。如果查询需要关联多张表，则只有当<code>ORDER BY</code>子句引用的字段全部为第一个表时，才能使用索引做排序。<code>ORDER BY</code>子句和查找型查询的限制是一样的：需要满足索引的最左前缀的要求，否则MySQL都需要执行排序操作，而无法利用索引排序。</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ul>
+<li>高性能 MySQL[M]. 电子工业出版社, 2013.</li>
+<li><a href="https://my.oschina.net/u/1034481/blog/824094" target="_blank" rel="noopener">mysql的索引——innodb索引（1）聚簇索引和次级索引</a></li>
+<li><a href="https://segmentfault.com/q/1010000003856705" target="_blank" rel="noopener">为什么InnoDB表最好要有自增列做主键</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/MySQL/"># MySQL</a>
+                    
+                        <a href="/tags/索引/"># 索引</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/01/28/MySQL查询性能优化/">MySQL查询性能优化</a>
+            
+            
+            <a class="next" rel="next" href="/2019/01/28/MySQL常用数据类型/">MySQL常用数据类型</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

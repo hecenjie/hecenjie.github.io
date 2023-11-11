@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>StringBuilder与StringBuffer源码分析 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">StringBuilder与StringBuffer源码分析</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">May 3, 2019&nbsp;&nbsp;21:32:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/Java/">Java</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p><code>StringBuilder</code>与<code>StringBuffer</code>是两个常用的字符串操作类，与<code>String</code>的不同之处在于他们是可变的，不像<code>String</code>的<code>value</code>数组被<code>final</code>修饰的严严实实的，而<code>StringBuilder</code>和<code>StringBuffer</code>的<code>value</code>数组没有被<code>final</code>修饰过，并且这两个类的实现几乎一样，主要的区别在于<code>StringBuffer</code>的方法由<code>synchronized</code>关键字修饰过，所以是线程安全的。这里先贴出整个体系的UML类图：</p>
+<p><img src="http://img.hecenjie.cn/AbstractStringBuilder.png" alt></p>
+<h2 id="AbstractStringBuilder"><a href="#AbstractStringBuilder" class="headerlink" title="AbstractStringBuilder"></a>AbstractStringBuilder</h2><p>从上面的类图也能看到，<code>StringBuilder</code>和<code>StringBuffer</code>均继承自抽象类<code>AbstractStringBuilder</code>，<code>AbstractStringBuilder</code>为子类提供了大部分的实现，因此，我们有必要先分析一下<code>AbstractStringBuilder</code>的源码。</p>
+<h3 id="成员变量"><a href="#成员变量" class="headerlink" title="成员变量"></a>成员变量</h3><p><code>AbstractStringBuilder</code>主要有以下两个成员变量，值得注意的是<code>value</code>并没有被<code>final</code>修饰，意味着它是可变的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 与 String 一样维护一个字符数组</span></span><br><span class="line"><span class="keyword">char</span>[] value;</span><br><span class="line"><span class="comment">// 字符的个数	</span></span><br><span class="line"><span class="keyword">int</span> count;</span><br></pre></td></tr></table></figure>
+<p>在这里顺便将构造函数的源码也分析了：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">AbstractStringBuilder() &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">AbstractStringBuilder(<span class="keyword">int</span> capacity) &#123;</span><br><span class="line">    value = <span class="keyword">new</span> <span class="keyword">char</span>[capacity];     <span class="comment">// 初始化为指定容量</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="扩容"><a href="#扩容" class="headerlink" title="扩容"></a>扩容</h3><p>在分析关键的<code>append()</code>方法前，我们先分析一下数组的扩容操作：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">ensureCapacity</span><span class="params">(<span class="keyword">int</span> minimumCapacity)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (minimumCapacity &gt; <span class="number">0</span>)</span><br><span class="line">        ensureCapacityInternal(minimumCapacity);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">ensureCapacityInternal</span><span class="params">(<span class="keyword">int</span> minimumCapacity)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// overflow-conscious code</span></span><br><span class="line">    <span class="keyword">if</span> (minimumCapacity - value.length &gt; <span class="number">0</span>) &#123;   <span class="comment">// 如果所需容量大于当前容量，则进行扩容</span></span><br><span class="line">        value = Arrays.copyOf(value,</span><br><span class="line">                newCapacity(minimumCapacity));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">newCapacity</span><span class="params">(<span class="keyword">int</span> minCapacity)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// overflow-conscious code</span></span><br><span class="line">    <span class="keyword">int</span> newCapacity = (value.length &lt;&lt; <span class="number">1</span>) + <span class="number">2</span>;  <span class="comment">// 计算新容量为原来容量的两倍加2</span></span><br><span class="line">    <span class="keyword">if</span> (newCapacity - minCapacity &lt; <span class="number">0</span>) &#123;           <span class="comment">// 如果计算出的新容量不够大</span></span><br><span class="line">        newCapacity = minCapacity;                  <span class="comment">// 直接将新容量设为所需容量</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> (newCapacity &lt;= <span class="number">0</span> || MAX_ARRAY_SIZE - newCapacity &lt; <span class="number">0</span>)</span><br><span class="line">        ? hugeCapacity(minCapacity)    <span class="comment">// 如果新容量大于 MAX_ARRAY_SIZE，还要做进一步判断</span></span><br><span class="line">        : newCapacity;                      <span class="comment">// 否则，返回新容量即可</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">hugeCapacity</span><span class="params">(<span class="keyword">int</span> minCapacity)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 如果所需容量大于整型最大值，则直接抛出 OutOfMemoryError</span></span><br><span class="line">    <span class="keyword">if</span> (Integer.MAX_VALUE - minCapacity &lt; <span class="number">0</span>) &#123; <span class="comment">// overflow</span></span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> OutOfMemoryError();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 如果所需容量大于 MAX_ARRAY_SIZE 且小于整型最大值时，返回所需容量</span></span><br><span class="line">    <span class="comment">// 如果所需容量小于 MAX_ARRAY_SIZE，返回 MAX_ARRAY_SIZE</span></span><br><span class="line">    <span class="keyword">return</span> (minCapacity &gt; MAX_ARRAY_SIZE)</span><br><span class="line">        ? minCapacity : MAX_ARRAY_SIZE;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>上面的扩容操作逻辑有点复杂，这里先总结下流程：</p>
+<ol>
+<li>默认的新容量大小为原容量大小的两倍加2，如果还不够，就直接设为所需要的容量大小</li>
+<li>如果新容量大小比<code>MAX_ARRAY_SIZE</code>小，那么直接返回该新容量大小</li>
+<li>否则，检查需要的容量大小是否超过整型最大值，如果超过则抛出异常</li>
+<li>如果需要的容量大小比<code>MAX_ARRAY_SIZE</code>大，则直接返回需要的容量大小；否则，返回<code>MAX_ARRAY_SIZE</code></li>
+</ol>
+<p>其实这个扩容操作和<code>ArrayList</code>的扩容操作逻辑基本一致，这里的<code>MAX_ARRAY_SIZE</code>的值为<code>Integer.MAX_VALUE - 8</code>也就是整型的最大值减8，那么为什么要设置成这个值呢？其实在注释中也有说明，一些虚拟机的实现可能会在数组中存储header words，因此如果分配比这个值更大的容量的话，有可能会导致<code>OutOfMemoryError</code>。</p>
+<h3 id="append"><a href="#append" class="headerlink" title="append()"></a>append()</h3><p>接下来看看<code>append()</code>方法，<code>append()</code>方法是整个类的核心，我们在实际中也经常使用。实际上它有很多个重载方法，这里就只分析参数为<code>String</code>类型的方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> AbstractStringBuilder <span class="title">append</span><span class="params">(String str)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (str == <span class="keyword">null</span>)                <span class="comment">// 如果参数为 null</span></span><br><span class="line">        <span class="keyword">return</span> appendNull();    <span class="comment">// 实际上是添加 'n' 、'u'、'l' 、'l' 四个字符到 value 数组中</span></span><br><span class="line">    <span class="keyword">int</span> len = str.length();</span><br><span class="line">    ensureCapacityInternal(count + len);    <span class="comment">// 扩容</span></span><br><span class="line">    str.getChars(<span class="number">0</span>, len, value, count);        <span class="comment">// 调用 String 的 getChars() 方法将 str 追加到 value 末尾</span></span><br><span class="line">    count += len;   <span class="comment">// 更新字符长度</span></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;       <span class="comment">// 返回自身，支持链式调用</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> AbstractStringBuilder <span class="title">appendNull</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> c = count;</span><br><span class="line">    ensureCapacityInternal(c + <span class="number">4</span>);</span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">char</span>[] value = <span class="keyword">this</span>.value;</span><br><span class="line">    value[c++] = <span class="string">'n'</span>;</span><br><span class="line">    value[c++] = <span class="string">'u'</span>;</span><br><span class="line">    value[c++] = <span class="string">'l'</span>;</span><br><span class="line">    value[c++] = <span class="string">'l'</span>;</span><br><span class="line">    count = c;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到<code>append()</code>方法其实逻辑挺简单的，但有两点是需要注意到的，一个是追加字符串的操作是通过<code>String</code>的<code>getChars()</code>完成的，但最后还是调用的<code>System.arraycopy()</code>这个native方法；另一个是该方法返回的是自身<code>this</code>，通过这种方式，我们可以实现<code>append()</code>方法的链式调用。</p>
+<h2 id="StringBuilder"><a href="#StringBuilder" class="headerlink" title="StringBuilder"></a>StringBuilder</h2><p>上面分析的<code>AbstractStringBuilder</code>已经实现了大部分需要的方法了，接下来开始分析第一个子类<code>StringBuilder</code>，先看看构造函数：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">StringBuilder</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>(<span class="number">16</span>);</span><br><span class="line">&#125;</span><br><span class="line">	</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">StringBuilder</span><span class="params">(<span class="keyword">int</span> capacity)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>(capacity);</span><br><span class="line">&#125;</span><br><span class="line">	</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">StringBuilder</span><span class="params">(String str)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>(str.length() + <span class="number">16</span>);</span><br><span class="line">    append(str);</span><br><span class="line">&#125;</span><br><span class="line">	</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">StringBuilder</span><span class="params">(CharSequence seq)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>(seq.length() + <span class="number">16</span>);</span><br><span class="line">    append(seq);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><code>StringBuilder</code>有四个重载的构造函数，并且默认的初始化容量为16，当然我们也可以指定初始化容量，或者直接传入一个已有的字符序列。</p>
+<h3 id="append-1"><a href="#append-1" class="headerlink" title="append()"></a>append()</h3><p><code>StringBuilder</code>的<code>append()</code>方法有非常多的重载，但其实都是调用父类<code>AbstractStringBuilder</code>的方法，在上面已经分析过了，所以这里就简单看一个：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> StringBuilder <span class="title">append</span><span class="params">(String str)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>.append(str);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="StringBuffer"><a href="#StringBuffer" class="headerlink" title="StringBuffer"></a>StringBuffer</h2><p><code>StringBuffer</code>和<code>StringBuilder</code>的实现基本一样，只不过方法被<code>synchronized</code>关键字修饰了，因此是线程安全的，比如下面的<code>append()</code>方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> StringBuffer <span class="title">append</span><span class="params">(String str)</span> </span>&#123;</span><br><span class="line">    toStringCache = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">super</span>.append(str);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>可以看到方法中有个<code>toStringCache</code>变量，这个变量是最近一次<code>toString()</code>方法的缓存，任何写操作都会将该缓存重设为<code>null</code>，我们看下这个<code>toString()</code>方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> String <span class="title">toString</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (toStringCache == <span class="keyword">null</span>) &#123;</span><br><span class="line">        toStringCache = Arrays.copyOfRange(value, <span class="number">0</span>, count);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> String(toStringCache, <span class="keyword">true</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>可以看到，如果缓存为空的话，那么就会先填充缓存，否则直接使用缓存<code>new</code>一个新的<code>String</code>对象并返回，但要注意的是，这里并不会有复制操作，而是直接将<code>String</code>对象中的<code>value</code>指向这个缓存数组：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">String(<span class="keyword">char</span>[] value, <span class="keyword">boolean</span> share) &#123;</span><br><span class="line">    <span class="comment">// assert share : "unshared not supported";</span></span><br><span class="line">    <span class="keyword">this</span>.value = value;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li>与<code>String</code>不同，<code>StringBuilder</code>和<code>StringBuffer</code>都是可变字符串，底层<code>value</code>数组没有使用<code>final</code>关键字修饰</li>
+<li><code>StringBuilder</code>和<code>StringBuffer</code>均继承自抽象类<code>AbstractStringBuilder</code>，它完成了大部分方法的实现，因此子类只需要调用父类的方法即可</li>
+<li><code>StringBuilder</code>和<code>StringBuffer</code>的默认容量都为16，并且默认的扩容大小是原来的两倍加2</li>
+<li><code>StringBuilder</code>不是线程安全的，而<code>StringBuffer</code>通过<code>synchronized</code>关键字保证了线程安全</li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/源码分析/"># 源码分析</a>
+                    
+                        <a href="/tags/JDK/"># JDK</a>
+                    
+                        <a href="/tags/StringBuilder/"># StringBuilder</a>
+                    
+                        <a href="/tags/StringBuffer/"># StringBuffer</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/05/04/Java中的深拷贝与浅拷贝/">Java中的深拷贝与浅拷贝</a>
+            
+            
+            <a class="next" rel="next" href="/2019/05/03/CountDownLatch与CyclicBarrier源码分析/">CountDownLatch与CyclicBarrier源码分析</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

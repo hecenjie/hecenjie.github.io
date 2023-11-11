@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>ConcurrentHashMap源码分析 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">ConcurrentHashMap源码分析</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">February 1, 2019&nbsp;&nbsp;14:05:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/JDK/">JDK</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="为什么要使用ConcurrentHashMap"><a href="#为什么要使用ConcurrentHashMap" class="headerlink" title="为什么要使用ConcurrentHashMap"></a>为什么要使用ConcurrentHashMap</h2><ul>
+<li><p>HashMap线程不安全。在JDK1.8之前的版本中，HashMap的实现在并发执行put操作时会导致HashMap的<code>Entry</code>链表形成环形数据结构，<code>Entry</code>的<code>next</code>节点永远不为空，就会产生死循环获取<code>Entry</code>。在之后的版本中这个死循环的问题不再发生，但仍然无法保证并发环境下的线程安全。</p>
+</li>
+<li><p>HashTable使用<code>synchronized</code>来保证线程安全，因此当一个线程访问HashTable的同步方法时，其它线程也访问同步方法就会被阻塞，在线程竞争激烈时效率很低。</p>
+</li>
+</ul>
+<p>基于以上两点，我们在并发环境中应该选择线程安全且高效的<code>ConcurrentHashMap</code>。</p>
+<a id="more"></a>
+<h2 id="版本演进"><a href="#版本演进" class="headerlink" title="版本演进"></a>版本演进</h2><ul>
+<li>jdk1.7采用分段锁技术，整个哈希表被分成多个段，每个段中会对应一个Segment段锁，段与段之间可以并发访问，但是多线程想要操作同一个段是需要获取锁的。所有的put，get，remove等方法都是根据键的哈希值对应到相应的段中，然后尝试获取锁进行访问。<br><img src="http://img.hecenjie.cn/2184951-af57d9d50ae9f547.png" alt></li>
+<li>jdk1.8取消了基于Segment的分段锁思想，改用CAS + synchronized控制并发操作，在某些方面提升了性能。并且追随1.8版本的 HashMap 底层实现，使用数组+链表+红黑树进行数据存储。<br><img src="http://img.hecenjie.cn/2184951-d9933a0302f72d47.png" alt></li>
+</ul>
+<h2 id="JDK1-8分析"><a href="#JDK1-8分析" class="headerlink" title="JDK1.8分析"></a>JDK1.8分析</h2><h3 id="属性"><a href="#属性" class="headerlink" title="属性"></a>属性</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">transient</span> <span class="keyword">volatile</span> Node&lt;K,V&gt;[] table;	<span class="comment">//哈希表，第一次put时才进行初始化</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> <span class="keyword">volatile</span> Node&lt;K,V&gt;[] nextTable;	<span class="comment">//扩容时新生成的数组，其大小为原数组的两倍。</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> <span class="keyword">volatile</span> <span class="keyword">long</span> baseCount;	<span class="comment">//哈希表中存储的所有的结点的个数总和</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 用来控制table的初始化和扩容操作，默认为0。</span></span><br><span class="line"><span class="comment"> * 当为-1时代表table正在初始化，-N代表N-1个线程正在进行扩容操作，其余情况：</span></span><br><span class="line"><span class="comment"> * 如果table未初始化，表示table需要初始化的大小。</span></span><br><span class="line"><span class="comment"> * 如果table初始化完成，表示table的容量。</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> <span class="keyword">volatile</span> <span class="keyword">int</span> sizeCtl;</span><br></pre></td></tr></table></figure>
+<h3 id="ForwardingNode"><a href="#ForwardingNode" class="headerlink" title="ForwardingNode"></a>ForwardingNode</h3><p>这是一个特殊的<code>Node</code>节点，用来占位表示扩容时该桶的所有节点已完成迁移，hash值为-1，<code>key</code>和<code>value</code>都为null，并且内部存储着扩容后的表<code>nextTable</code>的引用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">ForwardingNode</span>&lt;<span class="title">K</span>,<span class="title">V</span>&gt; <span class="keyword">extends</span> <span class="title">Node</span>&lt;<span class="title">K</span>,<span class="title">V</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> Node&lt;K,V&gt;[] nextTable;</span><br><span class="line">    ForwardingNode(Node&lt;K,V&gt;[] tab) &#123;</span><br><span class="line">        <span class="keyword">super</span>(MOVED, <span class="keyword">null</span>, <span class="keyword">null</span>, <span class="keyword">null</span>);</span><br><span class="line">        <span class="keyword">this</span>.nextTable = tab;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="put"><a href="#put" class="headerlink" title="put()"></a>put()</h3><ol>
+<li><p>在计算键所对应的哈希值后，如果哈希表还未初始化，那么初始化它。此时只允许一个线程对表进行初始化，如果不巧有其他线程进来了，那么会让其他线程交出CPU等待下次系统调度。</p>
+</li>
+<li><p>初始化完后，获取table中对应索引的元素f，如果f为null，说明table中这个位置第一次插入元素，利用<code>Unsafe.compareAndSwapObject</code>方法插入Node节点。如果CAS成功，说明Node节点已经插入，随后<code>addCount()</code>方法会检查当前容量是否需要进行扩容。如果CAS失败，说明有其它线程提前插入了节点，自旋重新尝试在这个位置插入节点。</p>
+</li>
+<li><p>如果f的hash值等于<code>MOVED</code>也就是-1时，说明当前f是<code>ForwardingNode</code>节点，意味着有其它线程正在扩容，于是调用<code>helpTransfer()</code>方法让当前线程去协助扩容。</p>
+</li>
+<li><p>其余情况把新的Node节点按链表或红黑树的方式插入到合适的位置，这个过程采用同步内置锁实现并发。</p>
+</li>
+</ol>
+<h3 id="transfer"><a href="#transfer" class="headerlink" title="transfer()"></a>transfer()</h3><p>ConcurrentHashMap的扩容是高度并发的，执行逻辑如下：</p>
+<ol>
+<li><p>通过计算CPU核心数和Map数组的长度得到每个线程要帮助处理多少个桶，并且这里每个线程处理都是平均的。默认每个线程处理16个桶，因此，当长度是16的时候，扩容的时候只会有一个线程扩容。</p>
+</li>
+<li><p>初始化<code>nextTable</code>，将其在原有基础上扩容两倍。</p>
+</li>
+<li><p>进入一个while循环，每个线程会先领取自己的任务区间，然后开始<code>--i</code>来遍历自己的任务区间，对每个桶进行处理。</p>
+</li>
+<li><p>如果遇到桶的头结点是空的，那么使用<code>ForwardingNode</code>标识该桶已经被处理完成了。如果遇到已经处理完成的桶，直接跳过进行下一个桶的处理。如果是正常的桶，对桶首节点加锁，正常的迁移即可，迁移结束后依然会将原表的该位置标识位已经处理。</p>
+</li>
+<li><p><code>finnish</code>如果为true 则说明整张表的迁移操作已经全部完成了，我们只需要重置table的引用并将nextTable赋为空即可。否则，CAS式的将<code>sizeCtl</code>减一，表示当前线程已经完成了任务，退出扩容操作。</p>
+</li>
+</ol>
+<h3 id="addCount"><a href="#addCount" class="headerlink" title="addCount()"></a>addCount()</h3><p>当我们成功的添加完成一个结点，最后是需要判断添加操作后是否会导致哈希表达到它的阈值，并针对不同情况决定是否需要进行扩容，还有CAS式更新哈希表实际存储的键值对数量，这些操作都封装在<code>addCount</code>这个方法中，当然<code>putVal</code>方法的最后必然会调用该方法进行处理。该方法主要做两个事情：一是更新 <code>baseCount</code>，二是判断是否需要扩容。</p>
+<h3 id="remove"><a href="#remove" class="headerlink" title="remove()"></a>remove()</h3><p>ConcurrentHashMap的并发删除过程：首先遍历整张表的桶结点，如果表还未初始化或者无法根据参数的哈希值定位到桶结点，那么将返回null。如果定位到的桶结点类型是<code>ForwardingNode</code>结点，调用<code>helpTransfer</code>协助扩容。否则给桶加锁，删除一个节点，最后调用<code>addCount()</code>方法CAS式更新<code>baseCount</code>的值。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://www.cnblogs.com/yangming1996/p/8031199.html" target="_blank" rel="noopener">为并发而生的 ConcurrentHashMap（Java 8）</a></li>
+<li><a href="https://www.jianshu.com/p/c0642afe03e0" target="_blank" rel="noopener">深入浅出ConcurrentHashMap1.8</a></li>
+<li><a href="https://juejin.im/post/5b00160151882565bd2582e0" target="_blank" rel="noopener">并发编程——ConcurrentHashMap#transfer() 扩容逐行分析</a></li>
+<li><a href="tps://www.jianshu.com/p/e694f1e868ec" target="_blank" rel="noopener">谈谈ConcurrentHashMap1.7和1.8的不同实现</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/源码分析/"># 源码分析</a>
+                    
+                        <a href="/tags/JDK/"># JDK</a>
+                    
+                        <a href="/tags/ConcurrentHashMap/"># ConcurrentHashMap</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/02/02/Fork-join框架分析与实战/">Fork/join框架分析与实战</a>
+            
+            
+            <a class="next" rel="next" href="/2019/01/29/设计模式/">设计模式</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

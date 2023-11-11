@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>操作系统原理-进程线程模型 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">操作系统原理-进程线程模型</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">January 28, 2019&nbsp;&nbsp;18:43:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/操作系统/">操作系统</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="进程的定义"><a href="#进程的定义" class="headerlink" title="进程的定义"></a>进程的定义</h2><p>进程是具有独立功能的程序关于某个数据集合上的一次运行活动，是系统进行资源分配和调度的独立单位。</p>
+<a id="more"></a>
+<h2 id="进程控制块PCB"><a href="#进程控制块PCB" class="headerlink" title="进程控制块PCB"></a>进程控制块PCB</h2><p>PCB：Process Control Block，又称进程描述符、进程属性，是操作系统用于管理控制进程的一个专门数据结构，是系统感知进程存在的唯一标志。</p>
+<p>PCB的内容包括：</p>
+<ul>
+<li>进程描述信息</li>
+<li>进程控制信息</li>
+<li>所拥有的资源和使用情况</li>
+<li>CPU现场信息</li>
+</ul>
+<h2 id="进程状态及状态转换"><a href="#进程状态及状态转换" class="headerlink" title="进程状态及状态转换"></a>进程状态及状态转换</h2><h3 id="进程的三种基本状态"><a href="#进程的三种基本状态" class="headerlink" title="进程的三种基本状态"></a>进程的三种基本状态</h3><ul>
+<li>运行态（Running）：占有CPU，并在CPU上运行</li>
+<li>就绪态（Ready）：已经具备运行条件，但由于没有空闲CPU，而暂时不能运行</li>
+<li>等待态（Waiting/Blocked）：因等待某一事件而暂时不能运行（如等待读盘结果，又称为阻塞态、睡眠态）</li>
+</ul>
+<h3 id="三状态模型及状态转换"><a href="#三状态模型及状态转换" class="headerlink" title="三状态模型及状态转换"></a>三状态模型及状态转换</h3><p><img src="http://img.hecenjie.cn/1107494-20170420135629571-462537817.jpg" alt="三状态模型"></p>
+<p>其中，只有就绪态和运行态可以相互转换，其它的都是单向转换。</p>
+<h3 id="进程的其它状态"><a href="#进程的其它状态" class="headerlink" title="进程的其它状态"></a>进程的其它状态</h3><ul>
+<li>创建：已完成创建一进程所必要的工作，但因为资源有限尚未同意执行该进程</li>
+<li>终止：终止执行后，进程进入该状态，回收资源</li>
+<li>挂起：用于调节负载，进程不占用内存空间，其进程映像交换到磁盘上</li>
+</ul>
+<h3 id="进程的五状态模型"><a href="#进程的五状态模型" class="headerlink" title="进程的五状态模型"></a>进程的五状态模型</h3><p><img src="http://img.hecenjie.cn/7c03bb1fh78d58c467517&amp;690.jpg" alt="五状态模型"></p>
+<h2 id="进程队列"><a href="#进程队列" class="headerlink" title="进程队列"></a>进程队列</h2><p>操作系统为每一类进程建立一个或多个队列，队列元素为PCB，伴随进程状态的改变，其PCB从一个队列进入另一个队列。以下为五状态进程模型的队列模型：</p>
+<p><img src="http://img.hecenjie.cn/6%5D13%29OZ%601UJ0Y2JTDG7FG77.png" alt="进程队列"></p>
+<h2 id="进程控制"><a href="#进程控制" class="headerlink" title="进程控制"></a>进程控制</h2><p>进程控制操作完成进程各状态之间的转换，由具有特定功能的原语完成：</p>
+<ul>
+<li>进程创建原语</li>
+<li>进程撤消原语</li>
+<li>阻塞原语</li>
+<li>唤醒原语</li>
+<li>挂起原语<br>…</li>
+</ul>
+<p>原语：完成某种特定功能的一段程序，具有不可分割性或不可中断性，即原语的执行必须是连续的，在执行过程中不允许被中断</p>
+<h3 id="进程的创建"><a href="#进程的创建" class="headerlink" title="进程的创建"></a>进程的创建</h3><ul>
+<li>给新进程分配一个唯一标识以及进程控制块</li>
+<li>为进程分配地址空间</li>
+<li>初始化进程控制块</li>
+<li>设置相应的队列指针（如: 把新进程加到就绪队列链表中）</li>
+</ul>
+<h3 id="进程的撤销"><a href="#进程的撤销" class="headerlink" title="进程的撤销"></a>进程的撤销</h3><ul>
+<li>收回进程所占有的资源（如：关闭打开的文件、断开网络连接、回收分配的内存）</li>
+<li>撤消该进程的PCB</li>
+</ul>
+<h3 id="进程阻塞"><a href="#进程阻塞" class="headerlink" title="进程阻塞"></a>进程阻塞</h3><p>处于运行状态的进程，在其运行过程中期待某一事件发生，如等待键盘输入、等待磁盘数据传输完成、等待其它进程发送消息，当被等待的事件未发生时，由进程自己执行阻塞原语，使自己由运行态变为阻塞态。</p>
+<h2 id="上下文切换"><a href="#上下文切换" class="headerlink" title="上下文切换"></a>上下文切换</h2><p>将CPU硬件状态从一个进程换到另一个进程的过程称为上下文切换。</p>
+<p>进程运行时，其硬件状态保存在CPU上的寄存器中；进程不运行时，这些寄存器的值保存在进程控制块PCB中；当操作系统要运行一个新的进程时，将PCB中的相关值送到对应的寄存器中。</p>
+<h2 id="线程的定义"><a href="#线程的定义" class="headerlink" title="线程的定义"></a>线程的定义</h2><p>进程中的一个运行实体，是CPU的调度单位，有时将线程称为轻量级进程。</p>
+<p>线程共享所在进程的地址空间和其他资源。</p>
+<h2 id="线程机制的实现"><a href="#线程机制的实现" class="headerlink" title="线程机制的实现"></a>线程机制的实现</h2><h3 id="用户级线程"><a href="#用户级线程" class="headerlink" title="用户级线程"></a>用户级线程</h3><p>在用户空间建立线程库：提供一组管理线程的过程。运行时系统完成线程的管理工作，内核管理的还是进程，不知道线程的存在，线程切换不需要内核态特权。</p>
+<p><img src="http://img.hecenjie.cn/8$BOTZ56@%25WE6%7B9%293_PA%5B65.png" alt="用户级线程"></p>
+<p>优点：</p>
+<ul>
+<li>线程切换快</li>
+<li>调度算法是应用程序特定的</li>
+<li>用户级线程可运行在任何操作系统上（只需要实现线程库）</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>大多数系统调用是阻塞的，因此，由于内核阻塞进程，故进程中所有线程也被阻塞</li>
+</ul>
+<h3 id="核心级线程"><a href="#核心级线程" class="headerlink" title="核心级线程"></a>核心级线程</h3><p>内核管理所有线程管理，并向应用程序提供API接口。内核维护进程和线程的上下文，且线程的切换需要内核支持。</p>
+<p><img src="http://img.hecenjie.cn/AA%7D~%28L8IKG80E%25X%7B8%29%5BIN%7BJ.png" alt="核心级线程"></p>
+<h3 id="混合模型"><a href="#混合模型" class="headerlink" title="混合模型"></a>混合模型</h3><p>线程创建在用户空间完成，线程调度等在核心态完成。</p>
+<h2 id="线程与进程的区别"><a href="#线程与进程的区别" class="headerlink" title="线程与进程的区别"></a>线程与进程的区别</h2><ul>
+<li>拥有资源：进程是资源分配的最小单位，但是线程不拥有资源，线程可以访问隶属进程的资源。</li>
+<li>调度：线程是CPU调度的最小单位，在同一进程中，线程的切换不会引起进程切换，从一个进程中的线程切换到另一个进程中的线程时，会引起进程切换。</li>
+<li>系统开销：由于创建或撤销进程时，系统都要为之分配或回收资源，如内存空间、I/O 设备等，所付出的开销远大于创建或撤销线程时的开销。类似地，在进行进程切换时，涉及当前执行进程 CPU 环境的保存及新调度进程 CPU 环境的设置，而线程切换时只需保存和设置少量寄存器内容，开销很小。</li>
+<li>通信方面：线程间可以通过直接读写同一进程中的数据进行通信，但是进程通信需要借助 IPC。</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>Tanenbaum A S, Bos H. Modern operating systems[M]. Prentice Hall Press, 2014.</li>
+<li><a href="https://www.coursera.org/learn/os-pku/home/welcome" target="_blank" rel="noopener">北京大学操作系统原理（Operating Systems）</a></li>
+<li><a href="https://github.com/CyC2018/CS-Notes/blob/master/notes/%E8%AE%A1%E7%AE%97%E6%9C%BA%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F.md#%E4%B8%80%E6%A6%82%E8%BF%B0" target="_blank" rel="noopener">计算机操作系统</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/操作系统/"># 操作系统 </a>
+                    
+                        <a href="/tags/进程/"># 进程</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/01/28/操作系统原理-同步机制/">操作系统原理-同步机制</a>
+            
+            
+            <a class="next" rel="next" href="/2019/01/28/操作系统原理—/">操作系统原理-处理器调度</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>MySQL查询性能优化 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">MySQL查询性能优化</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">January 28, 2019&nbsp;&nbsp;22:33:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/数据库/">数据库</a>
+                            
+                                <a href="/categories/数据库/MySQL/">MySQL</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="优化数据访问"><a href="#优化数据访问" class="headerlink" title="优化数据访问"></a>优化数据访问</h2><h3 id="减少请求的数据量"><a href="#减少请求的数据量" class="headerlink" title="减少请求的数据量"></a>减少请求的数据量</h3><ul>
+<li>只返回必要的行：使用<code>LIMIT</code>语句来限制返回的数据。</li>
+<li>只返回必要的列：最好不要使用<code>SELECT *</code>语句。</li>
+<li>缓存重复查询的数据。</li>
+</ul>
+<a id="more"></a>
+<h3 id="减少服务器端扫描的行数"><a href="#减少服务器端扫描的行数" class="headerlink" title="减少服务器端扫描的行数"></a>减少服务器端扫描的行数</h3><p>最有效的方式是使用索引来覆盖查询。</p>
+<h2 id="重构查询方式"><a href="#重构查询方式" class="headerlink" title="重构查询方式"></a>重构查询方式</h2><h3 id="切分查询"><a href="#切分查询" class="headerlink" title="切分查询"></a>切分查询</h3><p>一个大查询如果一次性执行的话，可能一次锁住很多数据、占满整个事务日志、耗尽系统资源、阻塞很多小的但重要的查询。因此可以将大查询切分成小查询，每个查询功能完全一样，只完成一小部分，每次只返回一小部分查询结果。</p>
+<h3 id="分解关联查询"><a href="#分解关联查询" class="headerlink" title="分解关联查询"></a>分解关联查询</h3><p>可以对每一个表进行一次单表查询，然后将结果在应用程序中进行关联。这么做有如下优势：</p>
+<ul>
+<li>让缓存的效率更高。对于关联查询，如果其中一个表发生变化，那么整个查询缓存就无法使用。而分解后的多个查询，即使其中一个表发生变化，对其它表的查询缓存依然可以使用。</li>
+<li>将查询分解后，执行单个查询可以减少锁的竞争。</li>
+<li>分解成多个单表查询，这些单表查询的缓存结果更可能被其它查询使用到，从而减少冗余记录的查询。</li>
+</ul>
+<h2 id="查询执行"><a href="#查询执行" class="headerlink" title="查询执行"></a>查询执行</h2><p><img src="http://img.hecenjie.cn/201759140033188.jpg" alt></p>
+<ol>
+<li>客户端发送一条查询给服务器。</li>
+<li>服务器先检查查询缓存，如果命中了缓存，则立刻返回存储在缓存中的结果。否则进入下一阶段。</li>
+<li>服务器端进行SQL解析、预处理再由优化器生成对应的执行计划。</li>
+<li>MySQL根据优化器生成的执行计划，调用存储引擎的API来执行查询。</li>
+<li>将结果返回给客户端。</li>
+</ol>
+<p>MySQL解析器将使用MySQL语法规则验证和解析查询；预处理器则根据一些MySQL规则进一步检查解析树是否合法，例如检查数据表和数据列是否存在，之后会验证权限；查询优化器的作用是根据存储引擎提供的统计信息找出一个最优的执行计划。</p>
+<h2 id="优化-Limit-分页"><a href="#优化-Limit-分页" class="headerlink" title="优化 Limit 分页"></a>优化 Limit 分页</h2><p>在偏移量特别大的时候，例如可能是<code>LIMIT 1000, 20</code>这样的查询，这时MySQL需要查询10020条记录然后只返回最后20条，前面10000条记录都将被抛弃，这样的代价非常高。可以通过延迟关联和书签两个技巧进行优化。</p>
+<h3 id="延迟关联"><a href="#延迟关联" class="headerlink" title="延迟关联"></a>延迟关联</h3><p>优化此类分页查询的一个最简单的办法就是尽可能地使用索引覆盖扫描，而不是查询所有的列。然后根据需要做一次关联操作再返回所需的列。考虑下面的查询：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> film_id, description <span class="keyword">FROM</span> sakila.film <span class="keyword">ORDER</span> <span class="keyword">BY</span> title <span class="keyword">LIMIT</span> <span class="number">50</span>, <span class="number">5</span>;</span><br></pre></td></tr></table></figure>
+<p>此时没有覆盖索引，因此要回表获取记录55条，而只返回最后5条。这时候可以用延迟关联的技巧改写成如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> film.film_id, film.description</span><br><span class="line"><span class="keyword">FROM</span> sakila.film</span><br><span class="line">	<span class="keyword">INNER</span> <span class="keyword">JOIN</span>(</span><br><span class="line">		<span class="keyword">SELECT</span> film_id <span class="keyword">FROM</span> sakala.film</span><br><span class="line">		<span class="keyword">ORDER</span> <span class="keyword">BY</span> title <span class="keyword">LIMIT</span> <span class="number">50</span>, <span class="number">5</span></span><br><span class="line">	) <span class="keyword">AS</span> lim <span class="keyword">USING</span>(film_id);</span><br></pre></td></tr></table></figure>
+<p>这时候子查询中能使用覆盖索引，因此在索引结构中就能获取到需要访问的记录而无需回表，之后再根据关联列回表查询需要的所有列。</p>
+<h3 id="书签"><a href="#书签" class="headerlink" title="书签"></a>书签</h3><p><code>LIMIT</code>和<code>OFFSET</code>的问题，其实是<code>OFFSET</code>的问题，它会导致MySQL扫描大量不需要的行然后再抛弃掉。如果可以使用书签记录上次取数据的位置，那么下次就可以直接从该书签记录的位置开始扫描，这样就可以避免使用<code>OFFSET</code>。例如，若需要按照租借记录做翻页，那么可以根据最新一条租借记录向后追溯，首先使用下面的查询获得第一组结果：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> sakila.rental</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> rental_id <span class="keyword">DESC</span> <span class="keyword">LIMIT</span> <span class="number">20</span>;</span><br></pre></td></tr></table></figure>
+<p>会返回49到30的记录，那么下一页查询就可以从30这个点开始：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> sakila.rental</span><br><span class="line"><span class="keyword">WHERE</span> rental_id &lt; <span class="number">30</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> rental_id <span class="keyword">DESC</span> <span class="keyword">LIMIT</span> <span class="number">20</span>;</span><br></pre></td></tr></table></figure>
+<p>该技术的好处是无论翻页到多么后面，其性能都会很好。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>高性能 MySQL[M]. 电子工业出版社, 2013.</li>
+<li><a href="https://cyc2018.github.io/CS-Notes/#/notes/Java%20%E5%B9%B6%E5%8F%91?id=%E4%B8%83%E3%80%81juc-aqs" target="_blank" rel="noopener">CS-Notes</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/MySQL/"># MySQL</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/01/29/《剑指Offer》题解与笔记/">《剑指Offer》题解与笔记</a>
+            
+            
+            <a class="next" rel="next" href="/2019/01/28/MySQL索引类型与优化/">MySQL索引类型与优化</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

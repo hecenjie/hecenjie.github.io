@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>知识堆栈 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    <article class="post-wrap page">
+        
+        <h2 class="post-title">知识堆栈</h2>
+        
+        <section class="post-content">
+            <div align="center"><br>本专栏记录了笔者在漫长的学习过程中的诸多笔记，大多都是自己在阅读相关技术书籍与博客后摘录或总结的精华，方便日后的高效复习。部分内容还在更新中，由于笔者技术水平不高，无法保证每句话都是对的，但起码都是自己仔细推敲并思索过的，如有错误，还请指正。<br></div>
+
+<div align="center"><br><br><h1 class="post-title" itemprop="name headline" style="margin-top:20px">目录</h1><br></div>
+
+
+<h1 id="操作系统"><a href="#操作系统" class="headerlink" title="操作系统"></a>操作系统</h1><ul>
+<li>操作系统原理<ul>
+<li><a href="http://hecenjie.cn/2019/01/28/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%8E%9F%E7%90%86%E2%80%94/" target="_blank" rel="noopener">处理器调度</a></li>
+<li><a href="http://hecenjie.cn/2019/01/28/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%8E%9F%E7%90%86-%E8%BF%9B%E7%A8%8B%E7%BA%BF%E7%A8%8B%E6%A8%A1%E5%9E%8B/" target="_blank" rel="noopener">进程线程模型</a></li>
+<li><a href="http://hecenjie.cn/2019/01/28/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%8E%9F%E7%90%86-%E5%90%8C%E6%AD%A5%E6%9C%BA%E5%88%B6/" target="_blank" rel="noopener">同步机制</a></li>
+<li><a href="http://hecenjie.cn/2019/01/28/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%8E%9F%E7%90%86-%E5%AD%98%E5%82%A8%E6%A8%A1%E5%9E%8B/" target="_blank" rel="noopener">存储模型</a></li>
+<li><a href="http://hecenjie.cn/2019/01/28/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%8E%9F%E7%90%86-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" target="_blank" rel="noopener">文件系统</a>    </li>
+<li><a href="http://hecenjie.cn/2019/01/28/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%8E%9F%E7%90%86-%E6%AD%BB%E9%94%81/" target="_blank" rel="noopener">死锁</a>       </li>
+</ul>
+</li>
+<li><a href="https://blog.csdn.net/weixin_38429587/article/details/79110588" target="_blank" rel="noopener">Linux常用命令</a></li>
+</ul>
+<h1 id="数据结构与算法"><a href="#数据结构与算法" class="headerlink" title="数据结构与算法"></a>数据结构与算法</h1><ul>
+<li><a href="http://hecenjie.cn/2019/01/29/%E3%80%8A%E5%89%91%E6%8C%87Offer%E3%80%8B%E9%A2%98%E8%A7%A3%E4%B8%8E%E7%AC%94%E8%AE%B0/" target="_blank" rel="noopener">剑指Offer题解与笔记</a></li>
+<li><a href="https://blog.csdn.net/qq_38283262/article/category/8094796" target="_blank" rel="noopener">LeetCode题解与笔记</a></li>
+<li>常用排序算法<ul>
+<li><a href="http://hecenjie.cn/2019/01/28/%E5%88%9D%E7%BA%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95/" target="_blank" rel="noopener">初级排序算法</a></li>
+<li><a href="http://hecenjie.cn/2019/01/28/%E5%B8%B8%E8%A7%81%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E4%B9%8B%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F/" target="_blank" rel="noopener">归并排序</a></li>
+<li><a href="http://hecenjie.cn/2019/01/28/%E5%B8%B8%E8%A7%81%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E4%B9%8B%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F/" target="_blank" rel="noopener">快速排序</a></li>
+<li><a href="http://hecenjie.cn/2019/01/28/%E5%B8%B8%E8%A7%81%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E4%B9%8B%E5%A0%86%E6%8E%92%E5%BA%8F/" target="_blank" rel="noopener">堆排序</a></li>
+</ul>
+</li>
+<li>常用查找算法<ul>
+<li><a href="http://hecenjie.cn/2019/01/28/%E5%B8%B8%E7%94%A8%E6%9F%A5%E6%89%BE%E7%AE%97%E6%B3%95%E4%B9%8B%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE/" target="_blank" rel="noopener">二分查找</a></li>
+<li><a href="http://hecenjie.cn/2019/01/28/%E5%B8%B8%E7%94%A8%E6%9F%A5%E6%89%BE%E7%AE%97%E6%B3%95%E4%B9%8B%E4%BA%8C%E5%8F%89%E6%9F%A5%E6%89%BE%E6%A0%91/" target="_blank" rel="noopener">二叉查找树</a></li>
+<li><a href="http://hecenjie.cn/2019/01/28/%E5%B8%B8%E7%94%A8%E6%9F%A5%E6%89%BE%E7%AE%97%E6%B3%95%E4%B9%8B%E7%BA%A2%E9%BB%91%E6%A0%91/" target="_blank" rel="noopener">红黑树</a></li>
+<li><a href="http://hecenjie.cn/2019/01/28/%E5%B8%B8%E7%94%A8%E6%9F%A5%E6%89%BE%E7%AE%97%E6%B3%95%E4%B9%8BB-B-%E6%A0%91/" target="_blank" rel="noopener">B/B+树</a></li>
+<li><a href="http://hecenjie.cn/2019/05/28/%E5%B8%B8%E8%A7%81%E6%9F%A5%E6%89%BE%E7%AE%97%E6%B3%95%E4%B9%8B%E8%B7%B3%E8%B7%83%E8%A1%A8/" target="_blank" rel="noopener">跳跃表</a></li>
+<li><a href="http://hecenjie.cn/2019/01/28/%E5%B8%B8%E7%94%A8%E6%9F%A5%E6%89%BE%E7%AE%97%E6%B3%95%E4%B9%8B%E6%95%A3%E5%88%97%E8%A1%A8/" target="_blank" rel="noopener">散列表</a></li>
+</ul>
+</li>
+</ul>
+<h1 id="计算机网络"><a href="#计算机网络" class="headerlink" title="计算机网络"></a>计算机网络</h1><p><em>本部分摘选自CS-Notes</em></p>
+<ul>
+<li><a href="https://cyc2018.github.io/CS-Notes/#/notes/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C" target="_blank" rel="noopener">计算机网络</a></li>
+<li><a href="https://cyc2018.github.io/CS-Notes/#/notes/HTTP" target="_blank" rel="noopener">HTTP</a></li>
+<li><a href="https://cyc2018.github.io/CS-Notes/#/notes/Socket" target="_blank" rel="noopener">Socket</a></li>
+<li><a href="http://hecenjie.cn/2019/02/17/HTTPS%E7%9A%84%E8%BF%87%E7%A8%8B%E4%B8%8E%E5%8E%9F%E7%90%86/" target="_blank" rel="noopener">HTTPS的过程与原理</a></li>
+<li><a href="http://hecenjie.cn/2019/05/26/TCP%E4%B8%8EUDP%E7%9A%84%E5%8C%BA%E5%88%AB/" target="_blank" rel="noopener">TCP与UDP的区别</a></li>
+<li><a href="http://hecenjie.cn/2019/05/26/PUT%E5%92%8CPOST%E7%9A%84%E5%8C%BA%E5%88%AB/" target="_blank" rel="noopener">GET和POST的区别</a></li>
+<li><a href="http://hecenjie.cn/2019/02/13/%E8%AE%BF%E9%97%AE%E4%B8%80%E4%B8%AA%E7%BD%91%E9%A1%B5%E7%9A%84%E5%85%A8%E8%BF%87%E7%A8%8B/" target="_blank" rel="noopener">访问一个网站的全过程</a></li>
+<li><a href="https://github.com/CyC2018/CS-Notes/blob/master/notes/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%20-%20%E4%BC%A0%E8%BE%93%E5%B1%82.md#tcp-%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3" target="_blank" rel="noopener">TCP滑动窗口与流量控制</a></li>
+<li><a href="https://github.com/CyC2018/CS-Notes/blob/master/notes/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%20-%20%E4%BC%A0%E8%BE%93%E5%B1%82.md#tcp-%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6" target="_blank" rel="noopener">TCP拥塞控制</a></li>
+<li><a href="https://github.com/CyC2018/CS-Notes/blob/master/notes/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%20-%20%E5%BA%94%E7%94%A8%E5%B1%82.md#%E6%96%87%E4%BB%B6%E4%BC%A0%E9%80%81%E5%8D%8F%E8%AE%AE" target="_blank" rel="noopener">FTP的主动模式与被动模式</a></li>
+<li><a href="https://www.jianshu.com/p/33461b619d53" target="_blank" rel="noopener">图解SSH原理</a></li>
+</ul>
+<h1 id="Java"><a href="#Java" class="headerlink" title="Java"></a>Java</h1><ul>
+<li><p>Java基础</p>
+<ul>
+<li><a href="http://hecenjie.cn/2019/05/06/Java-8%E6%96%B0%E7%89%B9%E6%80%A7/" target="_blank" rel="noopener">Java 8新特性</a></li>
+<li><a href="http://hecenjie.cn/2019/04/30/Java%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/" target="_blank" rel="noopener">Java异常机制总结</a></li>
+<li><a href="http://hecenjie.cn/2019/05/04/Java%E4%B8%AD%E7%9A%84%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B5%85%E6%8B%B7%E8%B4%9D/" target="_blank" rel="noopener">Java的深拷贝与浅拷贝</a></li>
+<li><a href="http://hecenjie.cn/2019/05/04/Java%E5%BA%8F%E5%88%97%E5%8C%96%E4%B8%8E%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%9C%BA%E5%88%B6/" target="_blank" rel="noopener">Java序列化与反序列化机制</a></li>
+<li><a href="http://hecenjie.cn/2019/05/06/Java%E4%B8%AD%E7%9A%84%E8%A3%85%E7%AE%B1%E4%B8%8E%E6%8B%86%E7%AE%B1/" target="_blank" rel="noopener">Java的装箱与拆箱</a></li>
+<li><a href="https://www.cnblogs.com/yangming1996/p/9295168.html" target="_blank" rel="noopener">Java注解的基本原理</a></li>
+<li><a href="http://hecenjie.cn/2019/03/27/Linux-%E4%BA%94%E7%A7%8DIO%E6%A8%A1%E5%9E%8B/" target="_blank" rel="noopener">Linux五大I/O模型</a></li>
+<li><a href="https://www.cnblogs.com/zhuleixiao/p/8974982.html" target="_blank" rel="noopener">连接池原理</a></li>
+<li><a href="http://hecenjie.cn/2019/03/10/NIO%E7%9F%A5%E8%AF%86%E7%82%B9%E6%80%BB%E7%BB%93/" target="_blank" rel="noopener">NIO知识点总结</a></li>
+</ul>
+</li>
+<li><p>Java虚拟机</p>
+<ul>
+<li><a href="http://hecenjie.cn/2019/01/28/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3JVM-%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/" target="_blank" rel="noopener">内存模型</a></li>
+<li><a href="http://hecenjie.cn/2019/01/28/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3JVM-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" target="_blank" rel="noopener">类加载机制</a></li>
+<li><a href="http://hecenjie.cn/2019/01/28/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3JVM-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E4%B8%8E%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/" target="_blank" rel="noopener">垃圾收集与内存分配</a></li>
+<li><a href="http://hecenjie.cn/2019/05/24/%E7%A0%B4%E5%9D%8F%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B/" target="_blank" rel="noopener">破坏双亲委派模型</a></li>
+</ul>
+</li>
+<li>Java并发<ul>
+<li><a href="http://hecenjie.cn/2019/02/09/Java%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E5%9F%BA%E7%A1%80/" target="_blank" rel="noopener">Java并发编程基础</a></li>
+<li><a href="http://hecenjie.cn/2019/02/09/%E9%A1%BA%E5%BA%8F%E4%B8%80%E8%87%B4%E6%80%A7%E6%A8%A1%E5%9E%8B%E4%B8%8Ehappens-before%E8%A7%84%E5%88%99/" target="_blank" rel="noopener">顺序一致性模型与happens-before原则</a></li>
+<li><a href="http://hecenjie.cn/2019/02/08/%E6%B7%B1%E5%85%A5%E5%88%86%E6%9E%90volatile%E5%85%B3%E9%94%AE%E5%AD%97/" target="_blank" rel="noopener">深入分析volatile关键字</a></li>
+<li><a href="http://hecenjie.cn/2019/02/08/%E6%B7%B1%E5%85%A5%E5%88%86%E6%9E%90synchronized%E5%85%B3%E9%94%AE%E5%AD%97/" target="_blank" rel="noopener">深入分析synchronized关键字</a></li>
+<li><a href="http://hecenjie.cn/2019/02/09/%E6%B7%B1%E5%85%A5%E5%88%86%E6%9E%90final%E5%85%B3%E9%94%AE%E5%AD%97/" target="_blank" rel="noopener">final域的内存语义</a></li>
+<li><a href="http://hecenjie.cn/2019/02/10/Java%E4%B8%AD%E7%9A%84%E5%B9%B6%E5%8F%91%E5%B7%A5%E5%85%B7%E7%B1%BB/" target="_blank" rel="noopener">Java中的并发工具类</a></li>
+<li><a href="http://hecenjie.cn/2019/02/10/Executor%E6%A1%86%E6%9E%B6/" target="_blank" rel="noopener">Java线程池与Executor框架</a></li>
+<li><a href="http://hecenjie.cn/2019/02/02/Fork-join%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E4%B8%8E%E5%AE%9E%E6%88%98/" target="_blank" rel="noopener">Fork/join框架分析与实战</a></li>
+<li><a href="http://hecenjie.cn/2019/02/03/Java%E5%AE%9E%E7%8E%B0%E7%94%9F%E4%BA%A7%E8%80%85-%E6%B6%88%E8%B4%B9%E8%80%85%E6%A8%A1%E5%9E%8B/" target="_blank" rel="noopener">Java阻塞队列实现生产者-消费者模型</a></li>
+</ul>
+</li>
+<li>JDK源码阅读<ul>
+<li>集合框架<ul>
+<li><a href="http://hecenjie.cn/2018/09/06/ArrayList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" target="_blank" rel="noopener">ArrayList源码分析</a></li>
+<li><a href="http://hecenjie.cn/2018/09/11/LinkedList%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" target="_blank" rel="noopener">LinkedList源码分析</a></li>
+<li><a href="http://hecenjie.cn/2019/01/28/HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" target="_blank" rel="noopener">HashMap源码分析</a></li>
+<li><a href="http://hecenjie.cn/2019/02/01/ConcurrentHashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" target="_blank" rel="noopener">ConcurrentHashMap源码分析</a></li>
+<li><a href="https://www.imooc.com/article/23169" target="_blank" rel="noopener">LinkedHashMap源码分析</a></li>
+</ul>
+</li>
+<li>J.U.C<ul>
+<li><a href="http://hecenjie.cn/2019/05/02/AQS%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%EF%BC%9A%E7%8B%AC%E5%8D%A0%E4%B8%8E%E5%85%B1%E4%BA%AB%E5%90%8C%E6%AD%A5%E7%8A%B6%E6%80%81/" target="_blank" rel="noopener">AQS源码分析：独占与共享同步状态</a></li>
+<li><a href="http://hecenjie.cn/2019/05/02/AQS%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%EF%BC%9ACondition/" target="_blank" rel="noopener">AQS源码分析：Condition</a></li>
+<li><a href="http://hecenjie.cn/2019/05/03/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" target="_blank" rel="noopener">ReentrantLock源码分析</a></li>
+<li><a href="http://hecenjie.cn/2019/05/03/CountDownLatch%E4%B8%8ECyclicBarrier%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" target="_blank" rel="noopener">CountDownLatch与CyclicBarrier源码分析</a></li>
+<li><a href="http://hecenjie.cn/2019/05/11/ThreadLocal%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" target="_blank" rel="noopener">ThreadLocal源码分析</a></li>
+<li><a href="http://hecenjie.cn/2019/05/12/Java%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" target="_blank" rel="noopener">线程池源码分析</a></li>
+</ul>
+</li>
+<li>字符串<ul>
+<li><a href="http://hecenjie.cn/2019/04/20/String%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" target="_blank" rel="noopener">String源码分析</a></li>
+<li><a href="http://hecenjie.cn/2019/05/03/StringBuilder%E4%B8%8EStringBuffer%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" target="_blank" rel="noopener">StringBuilder与StringBuffer源码分析</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="http://hecenjie.cn/2019/01/29/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" target="_blank" rel="noopener">设计模式</a></li>
+</ul>
+<h1 id="数据库"><a href="#数据库" class="headerlink" title="数据库"></a>数据库</h1><ul>
+<li><a href="http://hecenjie.cn/2019/01/28/%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BA%8B%E5%8A%A1%E3%80%81%E9%94%81%E4%B8%8E%E8%AE%BE%E8%AE%A1%E5%8E%9F%E7%90%86/" target="_blank" rel="noopener">数据库事务、锁与设计原理</a></li>
+<li><p>MySQL</p>
+<ul>
+<li><a href="http://hecenjie.cn/2019/01/28/MySQL%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/" target="_blank" rel="noopener">MySQL常用数据类型</a></li>
+<li><a href="http://hecenjie.cn/2019/01/28/MySQL%E7%B4%A2%E5%BC%95%E7%B1%BB%E5%9E%8B%E4%B8%8E%E4%BC%98%E5%8C%96/" target="_blank" rel="noopener">MySQL索引类型与优化</a></li>
+<li><a href="http://hecenjie.cn/2019/05/27/%E5%BB%BA%E7%B4%A2%E5%BC%95%E7%9A%84%E5%87%A0%E5%A4%A7%E5%8E%9F%E5%88%99/" target="_blank" rel="noopener">MySQL建索引的几大原则</a></li>
+<li><a href="http://hecenjie.cn/2019/01/28/MySQL%E6%9F%A5%E8%AF%A2%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/" target="_blank" rel="noopener">MySQL查询性能优化</a></li>
+<li><a href="http://hecenjie.cn/2019/05/27/MySQL%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E4%B8%8E%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB/" target="_blank" rel="noopener">MySQL主从复制与分库分表</a></li>
+<li><a href="https://segmentfault.com/a/1190000008131735" target="_blank" rel="noopener">MySQL Explain使用分析</a></li>
+<li><a href="http://hecenjie.cn/2019/05/27/InnoDB%E7%9A%84%E8%A1%8C%E9%94%81%E4%B8%8E%E8%A1%A8%E9%94%81/" target="_blank" rel="noopener">InnoDB的行锁与表锁</a></li>
+<li><a href="http://hecenjie.cn/2019/05/05/InnoDB%E7%9A%84MVCC%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/" target="_blank" rel="noopener">InnoDB的MVCC实现原理</a></li>
+</ul>
+</li>
+<li><p>Redis</p>
+<ul>
+<li><a href="http://hecenjie.cn/2019/04/21/Redis%E4%BA%94%E5%A4%A7%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF/" target="_blank" rel="noopener">Redis五大数据类型</a></li>
+<li><a href="http://hecenjie.cn/2019/04/21/Redis-%E7%AE%A1%E9%81%93/" target="_blank" rel="noopener">Redis Pipeline</a></li>
+<li><a href="http://hecenjie.cn/2019/03/30/Redis%E4%BA%94%E7%A7%8D%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/" target="_blank" rel="noopener">Redis持久化</a></li>
+<li><a href="http://hecenjie.cn/2019/03/30/dis%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6/" target="_blank" rel="noopener">Redis主从复制</a></li>
+<li><a href="http://hecenjie.cn/2019/03/30/Redis-Sentinel/" target="_blank" rel="noopener">Redis Sentinel</a></li>
+<li><a href="http://hecenjie.cn/2019/03/31/Redis-Cluster/" target="_blank" rel="noopener">Redis Cluster</a></li>
+<li><a href="http://hecenjie.cn/2019/03/31/Redis%E7%BC%93%E5%AD%98%E8%AE%BE%E8%AE%A1%E4%B8%8E%E4%BC%98%E5%8C%96/" target="_blank" rel="noopener">Redis缓存设计与优化</a></li>
+<li><a href="http://hecenjie.cn/2019/04/21/Redis%E5%AE%9E%E7%8E%B0%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" target="_blank" rel="noopener">Redis实现分布式锁</a></li>
+</ul>
+</li>
+</ul>
+<h1 id="开源框架"><a href="#开源框架" class="headerlink" title="开源框架"></a>开源框架</h1><ul>
+<li><p>MyBatis</p>
+<ul>
+<li><a href="http://hecenjie.cn/2019/05/16/JDBC%EF%BC%9APreparedStatement%E5%92%8CStatement/" target="_blank" rel="noopener">PreparedStatement和Statement</a></li>
+<li><a href="http://hecenjie.cn/2019/05/16/MyBatis%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/" target="_blank" rel="noopener">MyBatis架构设计</a></li>
+<li><a href="http://hecenjie.cn/2019/05/16/MyBatis%E4%B9%8B-%E5%92%8C-%E7%9A%84%E5%8C%BA%E5%88%AB/" target="_blank" rel="noopener">MyBatis之#{}和${}的区别</a></li>
+<li><a href="http://hecenjie.cn/2019/05/19/Mybatis%E4%B9%8BMapper%E6%8E%A5%E5%8F%A3/" target="_blank" rel="noopener">MyBatis之Mapper接口</a></li>
+<li><a href="http://hecenjie.cn/2019/05/17/MyBatis%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/" target="_blank" rel="noopener">MyBatis缓存机制</a></li>
+<li><a href="http://hecenjie.cn/2019/05/17/MyBatis%E6%8F%92%E4%BB%B6%E6%9C%BA%E5%88%B6/" target="_blank" rel="noopener">MyBatis插件机制</a></li>
+<li><a href="https://segmentfault.com/a/1190000013678579" target="_blank" rel="noopener">MyBatis面试题1</a></li>
+<li><a href="https://my.oschina.net/zudajun/blog/747682" target="_blank" rel="noopener">MyBatis面试题2</a></li>
+</ul>
+</li>
+<li><p>Spring MVC</p>
+<ul>
+<li><a href="http://hecenjie.cn/2019/05/19/WebApplicationContext%E5%AE%B9%E5%99%A8%E5%88%9D%E5%A7%8B%E5%8C%96/" target="_blank" rel="noopener">Web容器初始化</a></li>
+<li><a href="http://hecenjie.cn/2019/05/19/Spring-MVC%EF%BC%9A%E8%AF%B7%E6%B1%82%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B/" target="_blank" rel="noopener">请求处理流程</a> </li>
+</ul>
+</li>
+<li><p>Spring IoC</p>
+<ul>
+<li><a href="http://hecenjie.cn/2019/05/19/Simple-IoC%E5%BC%80%E5%8F%91%E6%97%A5%E5%BF%97%EF%BC%9A%E8%B5%84%E6%BA%90%E5%8A%A0%E8%BD%BD/" target="_blank" rel="noopener">资源加载</a></li>
+<li><a href="http://hecenjie.cn/2019/05/19/Simple-IoC%E5%BC%80%E5%8F%91%E6%97%A5%E5%BF%97%EF%BC%9ABeanDefinition%E5%8A%A0%E8%BD%BD/" target="_blank" rel="noopener">注册BeanDefinition</a></li>
+<li><a href="http://hecenjie.cn/2019/05/21/Simple-IoC%E5%BC%80%E5%8F%91%E6%97%A5%E5%BF%97%EF%BC%9AgetBean/" target="_blank" rel="noopener">加载Bean</a></li>
+<li><a href="http://hecenjie.cn/2019/05/23/ApplicationContext%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" target="_blank" rel="noopener">ApplicationContext体系分析</a></li>
+<li><a href="http://hecenjie.cn/2019/05/24/Autowired%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" target="_blank" rel="noopener">@Autowired源码分析</a></li>
+</ul>
+</li>
+<li><p>Spring AOP</p>
+<ul>
+<li><a href="http://hecenjie.cn/2019/04/30/JDK%E4%B8%8ECGLIB%E5%8A%A8%E6%80%81%E4%BB%A3%E7%90%86/" target="_blank" rel="noopener">JDK与CGLIB动态代理</a></li>
+<li><a href="http://hecenjie.cn/2019/04/30/Spring-AOP%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/" target="_blank" rel="noopener">Spring AOP源码笔记</a></li>
+</ul>
+</li>
+<li><p>Spring事务</p>
+<ul>
+<li><a href="https://www.cnblogs.com/niceyoo/p/8729525.html" target="_blank" rel="noopener">基本原理</a></li>
+<li><a href="https://www.cnblogs.com/niceyoo/articles/8732891.html" target="_blank" rel="noopener">使用方式</a></li>
+</ul>
+</li>
+<li><p><a href="https://blog.csdn.net/xlgen157387/article/details/79006434" target="_blank" rel="noopener">Tomcat架构</a></p>
+</li>
+</ul>
+<h1 id="中间件"><a href="#中间件" class="headerlink" title="中间件"></a>中间件</h1><ul>
+<li>RabbitMQ<ul>
+<li><a href="http://hecenjie.cn/2019/04/26/RabbitMQ%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/" target="_blank" rel="noopener">RabbitMQ入门</a></li>
+<li><a href="http://hecenjie.cn/2019/04/26/RabbitMQ%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7/" target="_blank" rel="noopener">RabbitMQ进阶</a></li>
+<li><a href="http://hecenjie.cn/2019/05/08/RabbitMQ%EF%BC%9A%E9%95%9C%E5%83%8F%E9%98%9F%E5%88%97%E3%80%81/" target="_blank" rel="noopener">RabbitMQ高阶</a></li>
+</ul>
+</li>
+</ul>
+<h1 id="分布式系统"><a href="#分布式系统" class="headerlink" title="分布式系统"></a>分布式系统</h1><ul>
+<li><a href="http://hecenjie.cn/2019/10/27/CAP%E4%B8%8EBASE%E7%90%86%E8%AE%BA/" target="_blank" rel="noopener">CAP与BASE理论</a></li>
+<li><a href="http://hecenjie.cn/2019/10/27/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7%E5%8D%8F%E8%AE%AE%EF%BC%9A2PC%E4%B8%8E3PC/" target="_blank" rel="noopener">分布式一致性协议：2PC与3PC</a></li>
+<li><a href="https://github.com/BitNile/paxos-wiki" target="_blank" rel="noopener">分布式一致性协议：Paxos</a></li>
+<li><a href="https://www.cnblogs.com/linbingdong/p/6442673.html" target="_blank" rel="noopener">分布式一致性协议：Raft</a></li>
+</ul>
+
+        </section>
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="水木今山">
+
+
+    <meta name="subtitle" content="Coding the World">
+
+
+    <meta name="description" content="Coding the World">
+
+
+    <meta name="keywords" content="blog,hecenjie">
+
+
+<title>操作系统原理-文件系统 | 水木今山的博客</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">水木今山的博客</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">水木今山的博客</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/">Home</a>
+                
+                    <a class="menu-item" href="/archives/">Archives</a>
+                
+                    <a class="menu-item" href="/column/">Column</a>
+                
+                    <a class="menu-item" href="/tag/">Tags</a>
+                
+                    <a class="menu-item" href="/about/">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">操作系统原理-文件系统</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">水木今山</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">January 28, 2019&nbsp;&nbsp;18:47:00</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/操作系统/">操作系统</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="文件的分类"><a href="#文件的分类" class="headerlink" title="文件的分类"></a>文件的分类</h2><ul>
+<li>普通文件：包含了用户的信息，一般为ASCII或二进制文件</li>
+<li>目录文件：管理文件系统的系统文件</li>
+<li>特殊文件（设备文件）</li>
+</ul>
+<a id="more"></a>
+<h2 id="文件的逻辑结构"><a href="#文件的逻辑结构" class="headerlink" title="文件的逻辑结构"></a>文件的逻辑结构</h2><p>逻辑结构是从用户观点出发看到的文件的组织形式。分为以下两类：</p>
+<ul>
+<li>流式文件：无结构，对文件内信息不再划分单位，它是依次的一串字符流构成的文件。</li>
+<li>记录式文件：有结构，文件由若干个记录组成，可以按记 录进行读、写、查找等操作。</li>
+</ul>
+<h2 id="存储介质与物理块"><a href="#存储介质与物理块" class="headerlink" title="存储介质与物理块"></a>存储介质与物理块</h2><h3 id="典型的存储介质"><a href="#典型的存储介质" class="headerlink" title="典型的存储介质"></a>典型的存储介质</h3><p>磁盘(包括固态盘SSD)、磁带、光盘、U盘等等，以下为典型的磁盘结构：</p>
+<h3 id="物理块"><a href="#物理块" class="headerlink" title="物理块"></a>物理块</h3><ul>
+<li>信息存储、传输、分配的独立单位</li>
+<li>存储设备划分为大小相等的物理块，统一编号</li>
+</ul>
+<h2 id="磁盘访问"><a href="#磁盘访问" class="headerlink" title="磁盘访问"></a>磁盘访问</h2><ul>
+<li>寻道：磁头移动定位到指定磁道</li>
+<li>旋转延迟：等待指定扇区从磁头下旋转经过</li>
+<li>数据传输：数据在磁盘与内存之间的实际传输</li>
+</ul>
+<h2 id="文件控制块（FCB）"><a href="#文件控制块（FCB）" class="headerlink" title="文件控制块（FCB）"></a>文件控制块（FCB）</h2><p>为管理文件而设置的数据结构，保存管理文件所需的所有有关信息（文件属性或元数据）。</p>
+<p>文件控制块一般包含下列常用属性：</p>
+<ul>
+<li>文件名</li>
+<li>文件号</li>
+<li>文件大小</li>
+<li>文件地址</li>
+<li>创建时间</li>
+<li>最后修改时间</li>
+<li>最后访问时间</li>
+<li>各种标志(只读、隐藏、系统、归档等)</li>
+<li>… </li>
+</ul>
+<h2 id="文件目录"><a href="#文件目录" class="headerlink" title="文件目录"></a>文件目录</h2><ul>
+<li>文件目录：文件目录由目录项构成，统一管理每个文件的元数据，以支持文件名到文件物理地址的转换。</li>
+<li>目录文件：将文件目录以文件的形式存放在磁盘上。</li>
+<li>目录项：可以看成是FCB。</li>
+</ul>
+<p><img src="http://img.hecenjie.cn/J%256%28%29GY%289SA9IZM16$CXH@P.png" alt="文件目录"></p>
+<h2 id="文件的物理结构"><a href="#文件的物理结构" class="headerlink" title="文件的物理结构"></a>文件的物理结构</h2><p>文件的物理结构指的是文件在存储介质上的存放方式。</p>
+<h3 id="连续结构"><a href="#连续结构" class="headerlink" title="连续结构"></a>连续结构</h3><p>文件的信息存放在若干连续的物理块中。</p>
+<p><img src="http://img.hecenjie.cn/FF~%5BI%293MB7VNBNBG29TVL%5B5.png" alt="连续结构"></p>
+<p>连续结构实现简单，且所需的磁盘寻道次数和寻道时间最少，支持顺序存取和随机存取，但文件不能动态增长，且会产生许多外部碎片。</p>
+<h3 id="链接结构"><a href="#链接结构" class="headerlink" title="链接结构"></a>链接结构</h3><p>一个文件的信息存放在若干不连续的物理块中，各块之间通过指针连接，前一个物理块指向下一 个物理块。</p>
+<p><img src="http://img.hecenjie.cn/HGQ679OP1%29H%7BDV4KQBFPN~C.png" alt="lianjie"></p>
+<p>使用链接结构不存在外部碎片的问题，提高了磁盘空间利用率，有利于文件的动态扩充，但是比起连续结构需要更多的寻道次数和寻道时间，且存取速度慢，不适于随机存取。</p>
+<h3 id="索引结构"><a href="#索引结构" class="headerlink" title="索引结构"></a>索引结构</h3><p>一个文件的信息存放在若干不连续物理块中，系统为每个文件建立一个专用数据结构索引表，并将这些物理块的块号存放在该索引表中。</p>
+<p><img src="http://img.hecenjie.cn/AS%7DDZ0~DVA%29ST%5B42GL_1J_X.png" alt="索引结构"></p>
+<p>索引结构保持了链接结构的优点，也解决了其缺点：既能顺序存取又能随机存取，满足了文件动态增长的要求，能充分利用磁盘空间。但是索引结构依然有较多的寻道次数和寻道时间，而索引表本身也带来了额外系统开销。</p>
+<h4 id="多级索引结构（综合模式）"><a href="#多级索引结构（综合模式）" class="headerlink" title="多级索引结构（综合模式）"></a>多级索引结构（综合模式）</h4><p><img src="http://img.hecenjie.cn/LF%7DAA%5DF%60EYX$8D88AM@UZTF.png" alt="多级索引"></p>
+<p>UNIX文件系统采用的便是这种多级索引结构（综合模式）：每个文件的索引表有15个索引项，每项2个字节，前12项直接存放文件的物理块号，如果文件大于12块，则利用第13项指向一个物理块作为一级索引表。假设扇区大小为512字节，物理块等于扇区块大小，那么一级索引表可以存放256个物理块号。对于更大的文件还可利用第14和第15项作为二级和三级索引表。</p>
+<p><img src="http://img.hecenjie.cn/IM@B%29N356ONDW74_EW7D@M1.png" alt="unix多级索引"></p>
+<h2 id="文件目录检索"><a href="#文件目录检索" class="headerlink" title="文件目录检索"></a>文件目录检索</h2><p>用户给出文件名，按文件名查找到目录项/FCB，根据目录项/FCB中文件物理地址等信息，计算出文件中任意记录或字符在存储介质上的地址。</p>
+<p><img src="http://img.hecenjie.cn/%2998%5BS7GNZ@V8~ZL%7B$H%7DBW%5B1.png" alt="文件目录检索"></p>
+<h3 id="目录项分解法"><a href="#目录项分解法" class="headerlink" title="目录项分解法"></a>目录项分解法</h3><p>通过目录项分解法可以加快文件目录的检索速度。</p>
+<p>目录项分解法即把FCB分解成两部分：符号目录项（文件名，文件号）、基本目录项（除文件名外的所有字段）。目录文件改进后减少了访盘次数，提高了文件检索速度。</p>
+<h2 id="磁盘调度算法"><a href="#磁盘调度算法" class="headerlink" title="磁盘调度算法"></a>磁盘调度算法</h2><p>当有多个访盘请求等待时，采用一定的策略，对这些请求的服务顺序调整安排，以降低平均磁盘服务时间，达到公平、高效。</p>
+<h3 id="先来先服务（FCFS）"><a href="#先来先服务（FCFS）" class="headerlink" title="先来先服务（FCFS）"></a>先来先服务（FCFS）</h3><p>按访问请求到达的先后次序服务。</p>
+<p>优点是简单公平，但效率不高，相临两次请求可能会造成最内到最外的柱面寻道，使磁头反复移动，增加了服务时间，对机械也不利。</p>
+<p><img src="http://img.hecenjie.cn/IQXXIMC5P%7D%28%259Q%25S92Y0D_7.png" alt="FCFS"></p>
+<h3 id="最短寻道时间优先（Shortest-Seek-Time-First）"><a href="#最短寻道时间优先（Shortest-Seek-Time-First）" class="headerlink" title="最短寻道时间优先（Shortest Seek Time First）"></a>最短寻道时间优先（Shortest Seek Time First）</h3><p>优先选择距当前磁头最近的访问请求进行服务。</p>
+<p>虽然改善了磁盘平均服务时间，但是造成某些访问请求长期等待得不到服务，也就是饥饿现象。</p>
+<p><img src="http://img.hecenjie.cn/%605%7BWTIQ%5B%7DAJBLY%7BJICLY3Z5.png" alt="SSTF"></p>
+<h3 id="扫描算法（SCAN）"><a href="#扫描算法（SCAN）" class="headerlink" title="扫描算法（SCAN）"></a>扫描算法（SCAN）</h3><p>扫描算法又称为电梯算法，当设备无访问请求时，磁头不动；当有访问请求时，磁头按一个方向移动，在移动过程中对遇到的访问请求进行服务，然后判断该方向上是否还有访问请求，如果有则继续扫描；否则改变移动方向，并为经过的访问请求服务，如此反复。</p>
+<p><img src="http://img.hecenjie.cn/F%5BH%5D6J7%7DB0UL%284U4%25%29Z1Q91.png" alt="scan"></p>
+<h3 id="单向扫描算法（CSCAN）"><a href="#单向扫描算法（CSCAN）" class="headerlink" title="单向扫描算法（CSCAN）"></a>单向扫描算法（CSCAN）</h3><p>扫描调度算法（SCAN）存在这样的问题：当磁头刚从里向外移动过某一磁道时，恰有一进程请求访问此磁道，这时该进程必须等待，待磁头从里向外，然后再从外向里扫描完所有要访问的磁道后，才处理该进程的请求，致使该进程的请求被严重地推迟。</p>
+<p>为了减少这种延迟，CSCAN算法规定磁头只做单向移动。例如，磁头只自里向外移动，当磁头移到最外的被访问磁道时，磁头立即返回到最里的欲访磁道，即将最小磁道号紧接着最大磁道号构成循环，进行扫描。</p>
+<h3 id="旋转调度算法"><a href="#旋转调度算法" class="headerlink" title="旋转调度算法"></a>旋转调度算法</h3><p>旋转调度算法根据延迟时间来决定执行次序的调度，请求访问分为以下三种情况：</p>
+<ul>
+<li>若干等待访问者请求访问同一磁头上的不同扇区 </li>
+<li>若干等待访问者请求访问不同磁头上的不同编号的扇区</li>
+<li>若干等待访问者请求访问不同磁头上具有相同的扇区</li>
+</ul>
+<p>对于前两种情况总是让首先到达读写磁头位置下的扇区先进行传送操作，而对于第三种情况，这些扇区同时到达读写磁头位置下，可任意选择一个读写磁头进行传送操作。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>Tanenbaum A S, Bos H. Modern operating systems[M]. Prentice Hall Press, 2014.</li>
+<li><a href="https://www.coursera.org/learn/os-pku/home/welcome" target="_blank" rel="noopener">北京大学操作系统原理（Operating Systems）</a></li>
+<li><a href="https://github.com/CyC2018/CS-Notes/blob/master/notes/%E8%AE%A1%E7%AE%97%E6%9C%BA%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F.md#%E4%B8%80%E6%A6%82%E8%BF%B0" target="_blank" rel="noopener">计算机操作系统</a></li>
+</ul>
+
+        </div>
+
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/操作系统/"># 操作系统</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/01/28/操作系统原理-死锁/">操作系统原理-死锁</a>
+            
+            
+            <a class="next" rel="next" href="/2019/01/28/操作系统原理-存储模型/">操作系统原理-存储模型</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 水木今山 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>
